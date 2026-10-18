@@ -1,69 +1,68 @@
-# React + TypeScript + Vite
+# PaceLab
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Running dashboard powered by Intervals.icu (Garmin) or Strava.
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+pacelab/
+├── frontend/   # Vite + React + TypeScript dashboard
+└── backend/    # Express + TypeScript API (activity proxy)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Data providers
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Pick one with `DATA_PROVIDER` in `backend/.env`.
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+| Provider | Auth | Notes |
+|---|---|---|
+| `intervals` | Personal API key (server-side) | Single user. Sync Garmin → Intervals.icu. |
+| `strava` | OAuth per user | App owner may need an active Strava subscription. |
+
+### Intervals.icu (recommended for Garmin)
+1. Create a free account at https://intervals.icu
+2. In **Settings → Connections**, connect Garmin Connect
+3. In **Settings → Developer Settings**, generate an API key
+4. Set `DATA_PROVIDER=intervals` and `INTERVALS_API_KEY=...`
+
+> Activities that reach Intervals.icu *via Strava* are returned as stubs by its
+> API and are skipped. Connect Garmin directly.
+
+### Strava
+1. Go to https://www.strava.com/settings/api
+2. Set **Authorization Callback Domain** to `localhost`
+3. Set `DATA_PROVIDER=strava`, `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`
+
+## Setup
+
+### Backend
+```bash
+cd backend
+cp .env.example .env   # choose a provider and fill in its credentials
+npm install
+npm run dev            # http://localhost:4000
 ```
+
+Restart the backend after editing `.env`.
+
+### Frontend
+```bash
+cd frontend
+npm install
+npm run dev            # http://localhost:5173 (proxies /api -> :4000)
+```
+
+## API
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/health` | `{ status, provider }` |
+| GET | `/api/auth/me` | `{ provider, connected, athlete }` |
+| POST | `/api/auth/logout` | End PaceLab session (Strava) |
+| GET | `/api/auth/strava/login` | Strava only: redirect to consent screen |
+| GET | `/api/auth/strava/callback` | Strava only: OAuth callback |
+| POST | `/api/auth/strava/disconnect` | Strava only: revoke access + end session |
+| GET | `/api/activities/recent?limit=10` | `RunActivity[]` |
+| GET | `/api/activities/weekly-stats?weeks=8` | `WeeklyStats[]` |
+
+Credentials and tokens stay on the server; with Strava the browser only holds
+an opaque `httpOnly` session cookie. Sessions are in-memory, so restart =
+reconnect.

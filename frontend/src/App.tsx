@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
   BarChart3,
@@ -7,8 +7,10 @@ import {
   Footprints,
   Gauge,
   LayoutDashboard,
+  LogOut,
   Settings,
   TrendingUp,
+  X,
 } from "lucide-react";
 
 import MetricCard from "./components/MetricCard";
@@ -17,36 +19,84 @@ import PaceChart from "./components/PaceChart";
 import RecentRuns from "./components/RecentRuns";
 import GoalCard from "./components/GoalCard";
 
+import { ApiError } from "./api/apiClient";
+import { STRAVA_LOGIN_URL } from "./api/authApi";
+import { useConnection } from "./hooks/useConnection";
+import { apiActivityRepository } from "./repositories/apiActivityRepository";
 import { mockActivityRepository } from "./repositories/mockActivityRepository";
 import type { RunActivity, WeeklyStats } from "./types/activity";
 
 import "./App.css";
 
+function formatPaceMinutes(minutes: number | null | undefined): string {
+  if (minutes == null) return "--";
+  const totalSeconds = Math.round(minutes * 60);
+  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+}
+
 function App() {
+  const connection = useConnection();
+  const { isConnected, markDisconnected } = connection;
+  const providerLabel = connection.providerLabel ?? "your data source";
+  const isCheckingConnection = connection.state === "checking";
+
+  const repository = useMemo(
+    () => (isConnected ? apiActivityRepository : mockActivityRepository),
+    [isConnected],
+  );
+
   const [recentRuns, setRecentRuns] = useState<RunActivity[]>([]);
   const [weeklyStats, setWeeklyStats] = useState<WeeklyStats[]>([]);
   const [loadingDashboard, setLoadingDashboard] = useState(true);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait until we know which data source to use.
+    if (isCheckingConnection) return;
+
+    let cancelled = false;
+
     async function loadDashboardData() {
+      setLoadingDashboard(true);
+      setDashboardError(null);
+
       try {
         const [runs, stats] = await Promise.all([
-          mockActivityRepository.getRecentRuns(),
-          mockActivityRepository.getWeeklyStats(),
+          repository.getRecentRuns(),
+          repository.getWeeklyStats(),
         ]);
+        if (cancelled) return;
 
         setRecentRuns(runs);
         setWeeklyStats(stats);
-      } catch {
-        setDashboardError("Failed to load dashboard data.");
+      } catch (error) {
+        if (cancelled) return;
+
+        if (error instanceof ApiError && error.isUnauthorized) {
+          // Token revoked or session lost: fall back to demo data.
+          markDisconnected(
+            `Your ${providerLabel} session expired. Please reconnect.`,
+          );
+          return;
+        }
+        setDashboardError(
+          error instanceof ApiError && error.status === 429
+            ? `${providerLabel} rate limit reached. Please try again in a few minutes.`
+            : error instanceof ApiError && error.status === 403
+              ? `${providerLabel} refused access. Check the app/API key status in your ${providerLabel} settings.`
+              : "Failed to load dashboard data.",
+        );
       } finally {
-        setLoadingDashboard(false);
+        if (!cancelled) setLoadingDashboard(false);
       }
     }
 
     void loadDashboardData();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [repository, isCheckingConnection, markDisconnected, providerLabel]);
 
   const currentWeek = weeklyStats[weeklyStats.length - 1];
   const previousWeek = weeklyStats[weeklyStats.length - 2];
@@ -58,13 +108,14 @@ function App() {
       100
       : null;
 
+  // Only average runs that were recorded with a heart-rate monitor.
+  const heartRates = recentRuns
+    .map((run) => run.averageHeartRate)
+    .filter((hr): hr is number => hr !== null);
   const averageHeartRate =
-    recentRuns.length > 0
+    heartRates.length > 0
       ? Math.round(
-        recentRuns.reduce(
-          (total, run) => total + run.averageHeartRate,
-          0,
-        ) / recentRuns.length,
+        heartRates.reduce((total, hr) => total + hr, 0) / heartRates.length,
       )
       : null;
 
@@ -72,6 +123,23 @@ function App() {
     weeklyChange === null
       ? "Weekly overview"
       : `${weeklyChange > 0 ? "+" : ""}${weeklyChange.toFixed(1)}% vs last week`;
+
+  const disconnectedMessage =
+    connection.provider === "intervals"
+      ? "Couldn't reach Intervals.icu. Check INTERVALS_API_KEY in backend/.env. Showing sample data."
+      : "You're viewing sample running data. Connect Strava to see your own runs.";
+
+  const bannerMessage =
+    connection.notice ??
+    (loadingDashboard
+      ? "Loading your activity data..."
+      : dashboardError
+        ? dashboardError
+        : isConnected
+          ? `Showing your latest runs from ${providerLabel}.`
+          : connection.state === "unavailable"
+            ? "Backend is offline, so you're viewing sample running data."
+            : disconnectedMessage);
 
   return (
     <main className="app-shell">
@@ -111,13 +179,49 @@ function App() {
 
         <div className="sidebar-bottom">
           <div className="nav-label">DATA SOURCE</div>
-          <div className="sync-status">
-            <span className="status-dot" />
+          <div className={`sync-status ${isConnected ? "connected" : ""}`}>
+            {isConnected && connection.athlete?.profileImageUrl ? (
+              <img
+                className="athlete-avatar"
+                src={connection.athlete.profileImageUrl}
+                alt=""
+              />
+            ) : (
+              <span className="status-dot" />
+            )}
             <div>
-              <strong>Demo data</strong>
-              <small>Repository connected</small>
+              <strong>
+                {isConnected
+                  ? `${providerLabel} · ${connection.athlete?.firstName || "Connected"}`
+                  : "Demo data"}
+              </strong>
+              <small>
+                {isCheckingConnection
+                  ? "Checking connection..."
+                  : isConnected
+                    ? `Synced from ${providerLabel}`
+                    : connection.state === "unavailable"
+                      ? "Backend offline"
+                      : `${providerLabel} not connected`}
+              </small>
             </div>
           </div>
+
+          {connection.canDisconnect && (
+            <button
+              type="button"
+              className="nav-item strava-disconnect"
+              onClick={() => void connection.disconnectStrava()}
+            >
+              <LogOut size={18} />
+              <span>Disconnect Strava</span>
+            </button>
+          )}
+          {connection.canConnect && (
+            <a className="strava-connect" href={STRAVA_LOGIN_URL}>
+              Connect with Strava
+            </a>
+          )}
 
           <a className="nav-item" href="#settings">
             <Settings size={18} />
@@ -146,16 +250,26 @@ function App() {
           <div className="demo-banner-icon">
             <Activity size={18} />
           </div>
-          <div>
+          <div className="demo-banner-text">
             <strong>Your training at a glance</strong>
-            <p>
-              {loadingDashboard
-                ? "Loading your activity data..."
-                : dashboardError
-                  ? dashboardError
-                  : "You're viewing sample running data. Strava integration can be added later."}
-            </p>
+            <p>{bannerMessage}</p>
           </div>
+          {connection.notice ? (
+            <button
+              type="button"
+              className="banner-dismiss"
+              aria-label="Dismiss"
+              onClick={connection.dismissNotice}
+            >
+              <X size={16} />
+            </button>
+          ) : (
+            connection.canConnect && (
+              <a className="strava-connect banner-cta" href={STRAVA_LOGIN_URL}>
+                Connect with Strava
+              </a>
+            )
+          )}
         </div>
 
         {!loadingDashboard && !dashboardError && (
@@ -171,15 +285,7 @@ function App() {
 
               <MetricCard
                 label="Average Pace"
-                value={
-                  currentWeek
-                    ? `${Math.floor(currentWeek.averagePaceMinutes)}:${String(
-                      Math.round(
-                        (currentWeek.averagePaceMinutes % 1) * 60,
-                      ) % 60,
-                    ).padStart(2, "0")}`
-                    : "--"
-                }
+                value={formatPaceMinutes(currentWeek?.averagePaceMinutes)}
                 unit="/km"
                 change="Weekly average"
                 icon={Gauge}

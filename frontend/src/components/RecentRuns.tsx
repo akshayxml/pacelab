@@ -53,7 +53,7 @@ export default function RecentRuns({ runs }: RecentRunsProps) {
               {run.pace} <small>/km</small>
             </span>
             <span className="run-number">
-              {run.averageHeartRate} <small>bpm</small>
+              {run.averageHeartRate ?? "--"} <small>bpm</small>
             </span>
           </div>
         ))}

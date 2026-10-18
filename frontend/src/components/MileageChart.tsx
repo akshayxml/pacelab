@@ -8,7 +8,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import type { WeeklyStats } from "../types/activity";
 
 interface MileageChartProps {
@@ -20,7 +20,7 @@ export default function MileageChart({ data }: MileageChartProps) {
   const previous = data[data.length - 2];
 
   const change =
-    previous && previous.distanceKm !== 0
+    current && previous && previous.distanceKm !== 0
       ? Math.round(
         ((current.distanceKm - previous.distanceKm) /
           previous.distanceKm) *
@@ -35,13 +35,14 @@ export default function MileageChart({ data }: MileageChartProps) {
           <h2>Weekly mileage</h2>
           <p>Build consistency, one week at a time</p>
         </div>
-        <span className="panel-chip">8 weeks</span>
+        <span className="panel-chip">{data.length} weeks</span>
       </div>
 
       <div className="chart-summary">
-        <strong>{current.distanceKm} <small>km</small></strong>
-        <span className="positive">
-          <ArrowUpRight size={15} /> {change}%
+        <strong>{current?.distanceKm ?? "--"} <small>km</small></strong>
+        <span className={change >= 0 ? "positive" : "negative"}>
+          {change >= 0 ? <ArrowUpRight size={15} /> : <ArrowDownRight size={15} />}{" "}
+          {change}%
         </span>
       </div>
 
