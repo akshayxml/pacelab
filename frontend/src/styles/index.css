@@ -1,6 +1,5 @@
 /* Stylesheet entry point. Order matters: tokens → base → layout → components. */
-
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+/* Fonts are bundled from @fontsource (see main.tsx) so the app works offline. */
 
 @import './tokens.css';
 @import './base.css';
@@ -11,3 +10,4 @@
 @import './runs.css';
 @import './progress.css';
 @import './bestEfforts.css';
+@import './connect.css';

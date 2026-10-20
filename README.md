@@ -1,12 +1,23 @@
 # PaceLab
 
-Running dashboard powered by Intervals.icu (Garmin) or Strava.
+Running dashboard powered by Intervals.icu (Garmin) or Strava. Installable as
+a PWA and usable offline.
 
 ```
 pacelab/
-├── frontend/   # Vite + React + TypeScript dashboard
+├── frontend/   # Vite + React + TypeScript dashboard (PWA)
 └── backend/    # Express + TypeScript API (activity proxy)
 ```
+
+Two ways to run it:
+
+| | Static site (recommended) | With backend |
+|---|---|---|
+| Hosting | GitHub Pages, free | Any Node host / Docker |
+| Providers | Intervals.icu | Intervals.icu or Strava |
+| API key | Entered in the browser, stored on that device | `backend/.env` |
+| Best efforts cache | Per device (IndexedDB) | On the server |
+| Setup | [Static site](#static-site-free-github-pages) | [Setup](#setup) |
 
 ## Data providers
 
@@ -69,10 +80,48 @@ Credentials and tokens stay on the server; with Strava the browser only holds
 an opaque `httpOnly` session cookie. Sessions are in-memory, so restart =
 reconnect.
 
-## Self-hosting (free, private)
+## Static site (free, GitHub Pages)
 
-PaceLab with Intervals.icu shows **your** data to anyone who can reach it, so
-it should never be on the public internet. The setup below costs nothing:
+The frontend can run with no backend at all: your browser calls the
+Intervals.icu API directly with your own API key. The hosted site contains no
+data, so it's safe to publish. Strangers who open it only see demo data.
+
+### Deploy
+1. Push this repo to GitHub.
+2. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
+3. Push to `main`. The [deploy workflow](.github/workflows/deploy-pages.yml)
+   publishes to `https://<user>.github.io/<repo>/`.
+
+> GitHub Pages is free for public repos. For a private repo, use Cloudflare
+> Pages instead (free): build command
+> `cd frontend && npm ci && npm run build:standalone`, output `frontend/dist`.
+
+### Use it
+1. Open the site and click **Connect Intervals.icu**.
+2. Paste the API key from Intervals.icu → Settings → Developer Settings.
+   Let your password manager save it to fill it in on other devices.
+3. Install it: **Add to Home Screen** (iOS Safari) or **Install app**
+   (Chrome/Edge). On iOS, enter the key inside the installed app, since home-screen
+   apps don't share storage with Safari.
+
+The key stays in that browser's local storage and is sent only to
+Intervals.icu (enforced by the page's Content-Security-Policy). **Disconnect**
+removes it and all cached runs from the device; you can also revoke the key
+in Intervals.icu at any time. Best efforts are analysed once per device and
+cached, so after the first run only new activities are fetched.
+
+### Run locally
+```bash
+cd frontend
+npm run dev:standalone          # no backend needed
+npm run build:standalone        # production build in dist/
+```
+
+## Self-hosting with the backend (Docker + Tailscale)
+
+Use this if you want Strava, or prefer the API key on a server. With a
+server-side Intervals.icu key, PaceLab shows **your** data to anyone who can
+reach it, so it must not be on the public internet. This setup costs nothing:
 one small always-free VM, reachable only from your own devices via
 [Tailscale](https://tailscale.com) (free for personal use).
 

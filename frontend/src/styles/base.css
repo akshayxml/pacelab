@@ -1,7 +1,7 @@
 /* Reset, base typography and global element styles. */
 
 :root {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans Variable', sans-serif;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -60,7 +60,7 @@ p {
 }
 
 h1 {
-  font: 800 clamp(25px, 2.6vw, 34px) 'Manrope', sans-serif;
+  font: 800 clamp(25px, 2.6vw, 34px) 'Manrope Variable', sans-serif;
   letter-spacing: -1.4px;
   margin: 10px 0 5px;
 }

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 import BestEfforts from "./components/BestEfforts";
+import ConnectIntervals from "./components/ConnectIntervals";
 import MetricCard from "./components/MetricCard";
 import MileageChart from "./components/MileageChart";
 import PaceChart from "./components/PaceChart";
@@ -24,9 +25,11 @@ import YearlyProgress from "./components/YearlyProgress";
 
 import { ApiError } from "./api/apiClient";
 import { STRAVA_LOGIN_URL } from "./api/authApi";
+import { STANDALONE } from "./config";
 import { useConnection } from "./hooks/useConnection";
 import { useTheme } from "./hooks/useTheme";
 import { apiActivityRepository } from "./repositories/apiActivityRepository";
+import { intervalsActivityRepository } from "./repositories/intervalsActivityRepository";
 import { mockActivityRepository } from "./repositories/mockActivityRepository";
 import type { RunActivity, WeeklyStats } from "./types/activity";
 
@@ -102,8 +105,24 @@ function App() {
   );
 
   const repository = useMemo(
-    () => (isConnected ? apiActivityRepository : mockActivityRepository),
+    () =>
+      !isConnected
+        ? mockActivityRepository
+        : STANDALONE
+          ? intervalsActivityRepository
+          : apiActivityRepository,
     [isConnected],
+  );
+
+  // API-key form (static build); shown on request while disconnected.
+  const [showConnectForm, setShowConnectForm] = useState(false);
+  const connectWithKey = connection.connectWithKey;
+  const handleConnectWithKey = useCallback(
+    async (apiKey: string) => {
+      await connectWithKey(apiKey);
+      setShowConnectForm(false);
+    },
+    [connectWithKey],
   );
 
   const [recentRuns, setRecentRuns] = useState<RunActivity[]>([]);
@@ -185,10 +204,27 @@ function App() {
       ? "Weekly overview"
       : `${weeklyChange > 0 ? "+" : ""}${weeklyChange.toFixed(1)}% vs last week`;
 
-  const disconnectedMessage =
-    connection.provider === "intervals"
+  const disconnectedMessage = STANDALONE
+    ? "You're viewing sample running data. Connect Intervals.icu to see your own runs."
+    : connection.provider === "intervals"
       ? "Couldn't reach Intervals.icu. Check INTERVALS_API_KEY in backend/.env. Showing sample data."
       : "You're viewing sample running data. Connect Strava to see your own runs.";
+
+  // Opens the Strava consent screen, or the API-key form in the static build.
+  const connectButton = (className: string) =>
+    connection.connectMethod === "strava" ? (
+      <a className={`strava-connect ${className}`} href={STRAVA_LOGIN_URL}>
+        Connect with Strava
+      </a>
+    ) : connection.connectMethod === "api-key" && !showConnectForm ? (
+      <button
+        type="button"
+        className={`button-primary connect-cta ${className}`}
+        onClick={() => setShowConnectForm(true)}
+      >
+        Connect Intervals.icu
+      </button>
+    ) : null;
 
   const bannerMessage =
     connection.notice ??
@@ -267,18 +303,15 @@ function App() {
           {connection.canDisconnect && (
             <button
               type="button"
+              id="disconnect"
               className="nav-item strava-disconnect"
-              onClick={() => void connection.disconnectStrava()}
+              onClick={() => void connection.disconnect()}
             >
               <LogOut size={18} />
-              <span>Disconnect Strava</span>
+              <span>Disconnect {providerLabel}</span>
             </button>
           )}
-          {connection.canConnect && (
-            <a className="strava-connect" href={STRAVA_LOGIN_URL}>
-              Connect with Strava
-            </a>
-          )}
+          {connectButton("")}
 
           <button
             type="button"
@@ -319,7 +352,8 @@ function App() {
             <strong>Your training at a glance</strong>
             <p>{bannerMessage}</p>
           </div>
-          {connection.notice ? (
+          {connectButton("banner-cta")}
+          {connection.notice && (
             <button
               type="button"
               className="banner-dismiss"
@@ -328,14 +362,15 @@ function App() {
             >
               <X size={16} />
             </button>
-          ) : (
-            connection.canConnect && (
-              <a className="strava-connect banner-cta" href={STRAVA_LOGIN_URL}>
-                Connect with Strava
-              </a>
-            )
           )}
         </div>
+
+        {showConnectForm && connection.connectMethod === "api-key" && (
+          <ConnectIntervals
+            onConnect={handleConnectWithKey}
+            onCancel={() => setShowConnectForm(false)}
+          />
+        )}
 
         {!loadingDashboard && !dashboardError && activeTab === "overview" && (
           <div className="tab-panel" key="overview">

@@ -36,14 +36,14 @@
 
 .metric-value {
   margin: 17px 0 10px;
-  font: 800 28px 'Manrope', sans-serif;
+  font: 800 28px 'Manrope Variable', sans-serif;
   letter-spacing: -1px;
   white-space: nowrap;
 }
 
 .metric-value small {
   color: var(--text-muted);
-  font: 500 12px 'DM Sans', sans-serif;
+  font: 500 12px 'DM Sans Variable', sans-serif;
   letter-spacing: 0;
 }
 
@@ -71,7 +71,7 @@
 }
 
 .panel-heading h2 {
-  font: 700 15px 'Manrope', sans-serif;
+  font: 700 15px 'Manrope Variable', sans-serif;
   letter-spacing: -.3px;
   margin: 0 0 5px;
 }
@@ -141,12 +141,12 @@
 }
 
 .chart-summary>strong {
-  font: 800 27px 'Manrope', sans-serif;
+  font: 800 27px 'Manrope Variable', sans-serif;
   letter-spacing: -1px;
 }
 
 .chart-summary small {
-  font: 500 12px 'DM Sans', sans-serif;
+  font: 500 12px 'DM Sans Variable', sans-serif;
   color: var(--text-muted);
 }
 
@@ -173,7 +173,7 @@
 }
 
 .recharts-wrapper {
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'DM Sans Variable', sans-serif;
 }
 
 /* Loading / error text shown in place of a chart. */

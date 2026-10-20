@@ -1,0 +1,149 @@
+/* Intervals.icu API key form (static build) and shared buttons. */
+
+.button-primary,
+.button-ghost {
+  padding: 10px 14px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.button-primary {
+  border: 0;
+  background: var(--accent);
+  color: white;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.button-primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.button-ghost {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.button-ghost:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+/* Banner / sidebar call to action that opens the key form. */
+.connect-cta {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.banner-cta.connect-cta {
+  width: auto;
+  margin-top: 0;
+}
+
+.connect-panel {
+  max-width: 640px;
+  margin-bottom: 20px;
+}
+
+.connect-icon {
+  color: var(--accent-text);
+}
+
+.connect-form {
+  margin-top: 18px;
+}
+
+.connect-form label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.connect-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.connect-row input {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.connect-row input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.connect-row input[aria-invalid="true"] {
+  border-color: var(--negative);
+}
+
+.connect-error {
+  margin: 8px 0 0;
+  color: var(--negative);
+  font-size: 12px;
+}
+
+.connect-steps {
+  margin: 18px 0 0;
+  padding-left: 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.connect-steps a {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.connect-steps strong {
+  color: var(--text);
+}
+
+.connect-privacy {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--accent-soft);
+  color: var(--accent-soft-text);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.connect-privacy svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* The collapsed sidebar rail has no room; the banner button remains. */
+@media (max-width: 760px) {
+  .sidebar-bottom > .connect-cta,
+  .connect-icon {
+    display: none;
+  }
+}
