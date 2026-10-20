@@ -2,13 +2,13 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Activity,
-  BarChart3,
   CalendarDays,
   Footprints,
   Gauge,
   LayoutDashboard,
   LogOut,
-  Settings,
+  Moon,
+  Sun,
   TrendingUp,
   X,
 } from "lucide-react";
@@ -17,16 +17,39 @@ import MetricCard from "./components/MetricCard";
 import MileageChart from "./components/MileageChart";
 import PaceChart from "./components/PaceChart";
 import RecentRuns from "./components/RecentRuns";
-import GoalCard from "./components/GoalCard";
 
 import { ApiError } from "./api/apiClient";
 import { STRAVA_LOGIN_URL } from "./api/authApi";
 import { useConnection } from "./hooks/useConnection";
+import { useTheme } from "./hooks/useTheme";
 import { apiActivityRepository } from "./repositories/apiActivityRepository";
 import { mockActivityRepository } from "./repositories/mockActivityRepository";
 import type { RunActivity, WeeklyStats } from "./types/activity";
 
-import "./App.css";
+
+type Tab = "overview" | "activities";
+
+const TABS = {
+  overview: {
+    label: "Overview",
+    icon: LayoutDashboard,
+    eyebrow: "YOUR RUNNING JOURNAL",
+    title: "Running overview",
+    subtitle: "Track your training, understand your progress, and run smarter.",
+  },
+  activities: {
+    label: "Recent activities",
+    icon: Footprints,
+    eyebrow: "TRAINING LOG",
+    title: "Recent activities",
+    subtitle: "Your latest running sessions, newest first.",
+  },
+} as const;
+
+/** The active tab lives in the URL hash so it survives reloads and back/forward. */
+function tabFromHash(): Tab {
+  return window.location.hash === "#activities" ? "activities" : "overview";
+}
 
 function formatPaceMinutes(minutes: number | null | undefined): string {
   if (minutes == null) return "--";
@@ -36,6 +59,15 @@ function formatPaceMinutes(minutes: number | null | undefined): string {
 
 function App() {
   const connection = useConnection();
+  const { theme, toggleTheme } = useTheme();
+  const [activeTab, setActiveTab] = useState<Tab>(tabFromHash);
+  const page = TABS[activeTab];
+
+  useEffect(() => {
+    const onHashChange = () => setActiveTab(tabFromHash());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
   const { isConnected, markDisconnected } = connection;
   const providerLabel = connection.providerLabel ?? "your data source";
   const isCheckingConnection = connection.state === "checking";
@@ -156,25 +188,21 @@ function App() {
         <div className="nav-label">WORKSPACE</div>
 
         <nav>
-          <a className="nav-item active" href="#overview">
-            <LayoutDashboard size={18} />
-            <span>Overview</span>
-          </a>
-
-          <a className="nav-item" href="#mileage">
-            <BarChart3 size={18} />
-            <span>Statistics</span>
-          </a>
-
-          <a className="nav-item" href="#recent-runs">
-            <Footprints size={18} />
-            <span>Activities</span>
-          </a>
-
-          <a className="nav-item" href="#goal">
-            <TrendingUp size={18} />
-            <span>Goals</span>
-          </a>
+          {(Object.keys(TABS) as Tab[]).map((tab) => {
+            const { label, icon: Icon } = TABS[tab];
+            return (
+              <a
+                key={tab}
+                id={`tab-${tab}`}
+                className={`nav-item ${activeTab === tab ? "active" : ""}`}
+                href={`#${tab}`}
+                aria-current={activeTab === tab ? "page" : undefined}
+              >
+                <Icon size={18} />
+                <span>{label}</span>
+              </a>
+            );
+          })}
         </nav>
 
         <div className="sidebar-bottom">
@@ -223,26 +251,34 @@ function App() {
             </a>
           )}
 
-          <a className="nav-item" href="#settings">
-            <Settings size={18} />
-            <span>Settings</span>
-          </a>
+          <button
+            type="button"
+            id="theme-toggle"
+            className="nav-item theme-toggle"
+            onClick={toggleTheme}
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+            <span>{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+          </button>
         </div>
       </aside>
 
-      <section className="main-content" id="overview">
+      <section className="main-content">
         <header className="topbar">
           <div>
-            <div className="eyebrow">YOUR RUNNING JOURNAL</div>
-            <h1>Running overview</h1>
-            <p className="subtitle">
-              Track your training, understand your progress, and run smarter.
-            </p>
+            <div className="eyebrow">{page.eyebrow}</div>
+            <h1>{page.title}</h1>
+            <p className="subtitle">{page.subtitle}</p>
           </div>
 
           <div className="date-pill">
             <CalendarDays size={16} />
-            <span>Training dashboard</span>
+            <span>
+              {activeTab === "activities"
+                ? `${recentRuns.length} runs`
+                : "Training dashboard"}
+            </span>
           </div>
         </header>
 
@@ -272,8 +308,8 @@ function App() {
           )}
         </div>
 
-        {!loadingDashboard && !dashboardError && (
-          <>
+        {!loadingDashboard && !dashboardError && activeTab === "overview" && (
+          <div className="tab-panel" key="overview">
             <section className="metrics-grid">
               <MetricCard
                 label="Weekly Distance"
@@ -312,54 +348,16 @@ function App() {
             </section>
 
             <section className="charts-grid">
-              <div className="panel mileage-panel" id="mileage">
-                <div className="panel-heading">
-                  <div>
-                    <h2>Weekly mileage</h2>
-                    <p>Your distance over the last several weeks</p>
-                  </div>
-                </div>
-                <MileageChart data={weeklyStats} />
-              </div>
-
-              <div className="panel pace-panel">
-                <div className="panel-heading">
-                  <div>
-                    <h2>Pace progression</h2>
-                    <p>Track changes in your average running pace</p>
-                  </div>
-                </div>
-                <PaceChart data={weeklyStats} />
-              </div>
+              <MileageChart data={weeklyStats} />
+              <PaceChart data={weeklyStats} />
             </section>
+          </div>
+        )}
 
-            <section className="bottom-grid">
-              <div className="panel runs-panel" id="recent-runs">
-                <div className="panel-heading">
-                  <div>
-                    <h2>Recent activities</h2>
-                    <p>Your latest running sessions</p>
-                  </div>
-                  <span className="activity-count">
-                    {recentRuns.length} runs
-                  </span>
-                </div>
-
-                <RecentRuns runs={recentRuns} />
-              </div>
-
-              <div className="panel goal-panel" id="goal">
-                <div className="panel-heading">
-                  <div>
-                    <h2>Race goal</h2>
-                    <p>Keep working toward your target</p>
-                  </div>
-                </div>
-
-                <GoalCard />
-              </div>
-            </section>
-          </>
+        {!loadingDashboard && !dashboardError && activeTab === "activities" && (
+          <div className="tab-panel" key="activities">
+            <RecentRuns runs={recentRuns} />
+          </div>
         )}
 
         {loadingDashboard && (

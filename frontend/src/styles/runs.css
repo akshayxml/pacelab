@@ -1,0 +1,137 @@
+/* Run log table (Recent activities tab). */
+
+.runs-panel {
+  overflow: hidden;
+  padding-bottom: 5px;
+}
+
+.run-table {
+  margin-top: 22px;
+}
+
+.run-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.8fr) minmax(60px, .8fr) minmax(65px, .8fr) minmax(65px, .8fr);
+  gap: 10px;
+  align-items: center;
+  padding: 13px 8px;
+  margin: 0 -8px;
+  border-bottom: 1px solid var(--border-soft);
+  border-radius: 8px;
+  font-size: 12px;
+  transition: background .15s ease;
+}
+
+.run-row:not(.run-header):hover {
+  background: var(--surface-2);
+}
+
+.run-row:last-child {
+  border-bottom: 0;
+}
+
+.run-header {
+  color: var(--text-faint);
+  font-size: 9px;
+  letter-spacing: .7px;
+  font-weight: 700;
+  padding-top: 0;
+}
+
+.run-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.run-name strong,
+.run-name small {
+  display: block;
+}
+
+.run-name strong {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.run-name small {
+  color: var(--text-muted);
+  font-size: 10px;
+  margin-top: 4px;
+}
+
+.run-number {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.run-number small {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 9px;
+}
+
+/* ---------- Run type badges ---------- */
+
+.run-type-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.run-type-icon.easy {
+  background: var(--run-easy-bg);
+  color: var(--run-easy);
+}
+
+.run-type-icon.tempo {
+  background: var(--run-tempo-bg);
+  color: var(--run-tempo);
+}
+
+.run-type-icon.long {
+  background: var(--run-long-bg);
+  color: var(--run-long);
+}
+
+.run-type-icon.intervals {
+  background: var(--run-intervals-bg);
+  color: var(--run-intervals);
+}
+
+.run-type-icon.race {
+  background: var(--run-race-bg);
+  color: var(--run-race);
+}
+
+@media (max-width: 760px) {
+  .run-row {
+    grid-template-columns: minmax(100px, 1.6fr) minmax(48px, .7fr) minmax(55px, .8fr);
+    gap: 6px;
+  }
+
+  /* Drop the heart-rate column on small screens. */
+  .run-row> :last-child {
+    display: none;
+  }
+
+  .run-name {
+    gap: 6px;
+  }
+
+  .run-type-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .run-name strong {
+    max-width: 125px;
+  }
+}

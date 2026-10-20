@@ -54,26 +54,28 @@ export default function MileageChart({ data }: MileageChartProps) {
           >
             <CartesianGrid
               vertical={false}
-              stroke="#e9e9e5"
+              stroke="var(--chart-grid)"
               strokeDasharray="3 3"
             />
             <XAxis
               dataKey="week"
-              tick={{ fontSize: 11, fill: "#92938e" }}
+              tick={{ fontSize: 11, fill: "var(--chart-tick)" }}
               axisLine={false}
               tickLine={false}
               dy={10}
             />
             <YAxis
-              tick={{ fontSize: 11, fill: "#92938e" }}
+              tick={{ fontSize: 11, fill: "var(--chart-tick)" }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
-              cursor={{ fill: "#f2f4ee" }}
+              cursor={{ fill: "var(--chart-cursor)" }}
               contentStyle={{
                 borderRadius: 10,
-                border: "1px solid #e7e8e2",
+                border: "1px solid var(--border)",
+                background: "var(--surface-2)",
+                color: "var(--text)",
                 fontSize: 12,
               }}
               formatter={(value) => [`${value} km`, "Distance"]}
@@ -81,7 +83,7 @@ export default function MileageChart({ data }: MileageChartProps) {
             <Bar
               dataKey="distanceKm"
               name="Distance"
-              fill="#526c4e"
+              fill="var(--chart-bar)"
               radius={[5, 5, 0, 0]}
               maxBarSize={32}
             />

@@ -1,0 +1,170 @@
+/* Metric cards, panels and chart panels. */
+
+.metric-card,
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  transition: var(--theme-transition), transform .2s ease;
+}
+
+/* ---------- Metric cards ---------- */
+
+.metric-card {
+  padding: 18px;
+  min-width: 0;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+}
+
+.metric-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.metric-icon {
+  color: var(--accent-text);
+  display: flex;
+}
+
+.metric-value {
+  margin: 17px 0 10px;
+  font: 800 28px 'Manrope', sans-serif;
+  letter-spacing: -1px;
+  white-space: nowrap;
+}
+
+.metric-value small {
+  color: var(--text-muted);
+  font: 500 12px 'DM Sans', sans-serif;
+  letter-spacing: 0;
+}
+
+.metric-change {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent-text);
+  font-size: 10px;
+}
+
+/* ---------- Panels ---------- */
+
+.panel {
+  padding: 22px;
+  min-width: 0;
+}
+
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.panel-heading h2 {
+  font: 700 15px 'Manrope', sans-serif;
+  letter-spacing: -.3px;
+  margin: 0 0 5px;
+}
+
+.panel-heading p {
+  color: var(--text-muted);
+  font-size: 11px;
+  margin: 0;
+}
+
+.panel-chip {
+  background: var(--surface-2);
+  color: var(--text-muted);
+  padding: 6px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.loading-panel,
+.error-panel {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.error-panel {
+  color: var(--negative);
+}
+
+/* ---------- Charts ---------- */
+
+.chart-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.chart-summary>strong {
+  font: 800 27px 'Manrope', sans-serif;
+  letter-spacing: -1px;
+}
+
+.chart-summary small {
+  font: 500 12px 'DM Sans', sans-serif;
+  color: var(--text-muted);
+}
+
+.positive,
+.negative {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 10px;
+}
+
+.positive {
+  color: var(--accent-text);
+}
+
+.negative {
+  color: var(--negative);
+}
+
+.chart-container {
+  height: 215px;
+  width: 100%;
+  margin-top: 9px;
+}
+
+.recharts-wrapper {
+  font-family: 'DM Sans', sans-serif;
+}
+
+@media (min-width: 1500px) {
+  .metric-card {
+    padding: 22px;
+  }
+
+  .chart-container {
+    height: 260px;
+  }
+}
+
+@media (max-width: 760px) {
+  .metric-card {
+    padding: 14px;
+  }
+
+  .metric-value {
+    font-size: 24px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+}

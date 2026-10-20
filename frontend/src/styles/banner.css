@@ -1,0 +1,77 @@
+/* Status banner and Strava connect button. */
+
+.demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 27px 0 20px;
+  padding: 12px 15px;
+  background: var(--banner-bg);
+  border: 1px solid var(--banner-border);
+  border-radius: 9px;
+  color: var(--banner-text);
+  font-size: 12px;
+  transition: var(--theme-transition);
+}
+
+.demo-banner svg {
+  flex-shrink: 0;
+}
+
+.demo-banner strong {
+  color: var(--banner-strong);
+}
+
+.demo-banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.demo-banner-text p {
+  margin: 2px 0 0;
+}
+
+.banner-dismiss {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.banner-dismiss:hover {
+  background: var(--hover-overlay);
+}
+
+.strava-connect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--strava);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.strava-connect:hover {
+  background: var(--strava-hover);
+}
+
+.banner-cta {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .banner-cta {
+    padding: 8px 10px;
+  }
+}

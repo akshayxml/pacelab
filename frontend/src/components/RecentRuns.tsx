@@ -1,5 +1,5 @@
 
-import { ArrowUpRight, Footprints } from "lucide-react";
+import { Footprints } from "lucide-react";
 import type { RunActivity } from "../types/activity";
 
 interface RecentRunsProps {
@@ -11,19 +11,9 @@ export default function RecentRuns({ runs }: RecentRunsProps) {
     <div className="panel runs-panel" id="runs">
       <div className="panel-heading">
         <div>
-          <h2>Recent activities</h2>
-          <p>Your latest miles</p>
+          <h2>Run log</h2>
+          <p>{runs.length} runs · newest first</p>
         </div>
-        <button
-          className="text-button"
-          onClick={() =>
-            document.getElementById("runs")?.scrollIntoView({
-              behavior: "smooth",
-            })
-          }
-        >
-          View all <ArrowUpRight size={14} />
-        </button>
       </div>
 
       <div className="run-table">

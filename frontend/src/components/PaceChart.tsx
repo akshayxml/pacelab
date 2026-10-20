@@ -64,19 +64,19 @@ export default function PaceChart({ data }: PaceChartProps) {
           >
             <defs>
               <linearGradient id="paceFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#d6a45c" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#d6a45c" stopOpacity={0.02} />
+                <stop offset="0%" stopColor="var(--chart-line)" stopOpacity={0.3} />
+                <stop offset="100%" stopColor="var(--chart-line)" stopOpacity={0.02} />
               </linearGradient>
             </defs>
 
             <CartesianGrid
               vertical={false}
-              stroke="#e9e9e5"
+              stroke="var(--chart-grid)"
               strokeDasharray="3 3"
             />
             <XAxis
               dataKey="week"
-              tick={{ fontSize: 11, fill: "#92938e" }}
+              tick={{ fontSize: 11, fill: "var(--chart-tick)" }}
               axisLine={false}
               tickLine={false}
               dy={10}
@@ -85,14 +85,16 @@ export default function PaceChart({ data }: PaceChartProps) {
               reversed
               domain={["dataMin - 0.1", "dataMax + 0.1"]}
               tickFormatter={formatPace}
-              tick={{ fontSize: 11, fill: "#92938e" }}
+              tick={{ fontSize: 11, fill: "var(--chart-tick)" }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
               contentStyle={{
                 borderRadius: 10,
-                border: "1px solid #e7e8e2",
+                border: "1px solid var(--border)",
+                background: "var(--surface-2)",
+                color: "var(--text)",
                 fontSize: 12,
               }}
               formatter={(value) => [
@@ -104,11 +106,11 @@ export default function PaceChart({ data }: PaceChartProps) {
               type="monotone"
               dataKey="averagePaceMinutes"
               name="Average pace"
-              stroke="#c38a3c"
+              stroke="var(--chart-line)"
               strokeWidth={2.5}
               fill="url(#paceFill)"
               dot={false}
-              activeDot={{ r: 5, fill: "#c38a3c" }}
+              activeDot={{ r: 5, fill: "var(--chart-line)" }}
             />
           </AreaChart>
         </ResponsiveContainer>

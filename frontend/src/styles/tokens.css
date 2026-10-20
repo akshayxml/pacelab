@@ -1,0 +1,102 @@
+/* Design tokens.
+ * Dark (black + violet) is the default theme; light is a violet-accented
+ * variant. Components only reference these variables, including the charts.
+ */
+
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --bg: #09090b;
+  --bg-glow: rgba(124, 58, 237, 0.10);
+  --surface: #121215;
+  --surface-2: #1a1a1f;
+  --border: #24242b;
+  --border-soft: #1c1c22;
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 10px 30px rgba(0, 0, 0, 0.35);
+
+  --text: #ededf1;
+  --text-muted: #9a9aa7;
+  --text-faint: #686874;
+
+  --accent: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-text: #a78bfa;
+  --accent-soft: rgba(139, 92, 246, 0.14);
+  --accent-soft-text: #d4c6ff;
+  --negative: #f87171;
+
+  --banner-bg: #15121d;
+  --banner-border: #2a2240;
+  --banner-text: #b6a7d9;
+  --banner-strong: #e8e0ff;
+  --hover-overlay: rgba(255, 255, 255, 0.08);
+
+  --chart-grid: #232329;
+  --chart-tick: #6c6c78;
+  --chart-cursor: rgba(139, 92, 246, 0.10);
+  --chart-bar: #8b5cf6;
+  --chart-line: #a78bfa;
+
+  --run-easy-bg: rgba(139, 92, 246, 0.14);
+  --run-easy: #b49cff;
+  --run-tempo-bg: rgba(245, 158, 11, 0.13);
+  --run-tempo: #f5b453;
+  --run-long-bg: rgba(56, 189, 248, 0.12);
+  --run-long: #7dd3fc;
+  --run-intervals-bg: rgba(236, 72, 153, 0.13);
+  --run-intervals: #f49ac8;
+  --run-race-bg: rgba(249, 115, 22, 0.14);
+  --run-race: #fb923c;
+
+  /* Theme-independent */
+  --strava: #fc4c02;
+  --strava-hover: #e34402;
+  --theme-transition: background-color .25s ease, border-color .25s ease, color .25s ease;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --bg: #f7f7fa;
+  --bg-glow: rgba(124, 58, 237, 0.06);
+  --surface: #ffffff;
+  --surface-2: #f4f3f8;
+  --border: #e6e5ee;
+  --border-soft: #efeef4;
+  --shadow: 0 1px 2px rgba(24, 24, 27, 0.04), 0 8px 24px rgba(24, 24, 27, 0.04);
+
+  --text: #18181b;
+  --text-muted: #71717a;
+  --text-faint: #a1a1aa;
+
+  --accent: #7c3aed;
+  --accent-hover: #6d28d9;
+  --accent-text: #6d28d9;
+  --accent-soft: #f1ebfe;
+  --accent-soft-text: #5b21b6;
+  --negative: #dc2626;
+
+  --banner-bg: #f5f1fe;
+  --banner-border: #e5dbfc;
+  --banner-text: #5d4b8c;
+  --banner-strong: #35225f;
+  --hover-overlay: rgba(0, 0, 0, 0.06);
+
+  --chart-grid: #ececf1;
+  --chart-tick: #a1a1aa;
+  --chart-cursor: #f4f0fe;
+  --chart-bar: #7c3aed;
+  --chart-line: #8b5cf6;
+
+  --run-easy-bg: #f1ebfe;
+  --run-easy: #7c3aed;
+  --run-tempo-bg: #fdf3e2;
+  --run-tempo: #b7791f;
+  --run-long-bg: #e6f4fb;
+  --run-long: #0284c7;
+  --run-intervals-bg: #fce8f3;
+  --run-intervals: #be185d;
+  --run-race-bg: #feede3;
+  --run-race: #c2410c;
+}
