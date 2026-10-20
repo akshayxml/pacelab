@@ -1,6 +1,11 @@
 import { intervalsConfig } from "../config.js";
 import { UpstreamApiError } from "../errors.js";
-import type { Athlete, SourceActivity } from "../types/activity.js";
+import type {
+  ActivityLink,
+  Athlete,
+  DistanceStream,
+  SourceActivity,
+} from "../types/activity.js";
 import type {
   IntervalsActivity,
   IntervalsAthlete,
@@ -50,6 +55,30 @@ function toIsoDate(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toISOString().slice(0, 10);
 }
 
+/**
+ * Best link to the original activity: Garmin Connect or Strava when we can
+ * identify it, otherwise the Intervals.icu page (which links onward).
+ * Only the final URL leaves the server; raw external IDs can embed the
+ * athlete's email (e.g. "name@example.com_123.fit").
+ */
+function activityLink(activity: IntervalsActivity): ActivityLink {
+  const externalId = activity.external_id?.trim();
+  if (activity.source === "GARMIN_CONNECT" && externalId && /^\d+$/.test(externalId)) {
+    return {
+      url: `https://connect.garmin.com/modern/activity/${externalId}`,
+      label: "Garmin Connect",
+    };
+  }
+  const stravaId = activity.strava_id != null ? String(activity.strava_id) : "";
+  if (/^\d+$/.test(stravaId)) {
+    return { url: `https://www.strava.com/activities/${stravaId}`, label: "Strava" };
+  }
+  return {
+    url: `https://intervals.icu/activities/${encodeURIComponent(activity.id)}`,
+    label: "Intervals.icu",
+  };
+}
+
 function toSourceActivity(activity: IntervalsActivity): SourceActivity | null {
   // Strava-synced activities come back as stubs without metrics; skip them.
   if (
@@ -74,6 +103,7 @@ function toSourceActivity(activity: IntervalsActivity): SourceActivity | null {
     // distance and name heuristics.
     isLongRun: false,
     isWorkout: false,
+    link: activityLink(activity),
   };
 }
 
@@ -110,4 +140,32 @@ export async function listActivities(after: number): Promise<SourceActivity[]> {
     .map(toSourceActivity)
     .filter((a): a is SourceActivity => a !== null)
     .sort((a, b) => b.startDateLocal.localeCompare(a.startDateLocal));
+}
+
+/**
+ * Time + distance streams for one activity, or null when the activity has
+ * no distance data (e.g. gym sessions, manual entries).
+ */
+export async function getDistanceStream(
+  activityId: string,
+): Promise<DistanceStream | null> {
+  let streams: { type: string; data: (number | null)[] | null }[];
+  try {
+    streams = await apiGet(`/activity/${encodeURIComponent(activityId)}/streams`, {
+      types: "time,distance",
+    });
+  } catch (err) {
+    if (err instanceof IntervalsApiError && (err.status === 404 || err.status === 422)) {
+      return null;
+    }
+    throw err;
+  }
+
+  const time = streams.find((s) => s.type === "time")?.data;
+  const distance = streams.find((s) => s.type === "distance")?.data;
+  if (!time?.length || !distance?.length) return null;
+  return {
+    time: time.map((v) => v ?? 0),
+    distance: distance.map((v) => v ?? 0),
+  };
 }

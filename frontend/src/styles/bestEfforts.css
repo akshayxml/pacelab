@@ -1,0 +1,254 @@
+/* Best efforts tab: analysis progress and sortable effort table. */
+
+.best-efforts {
+  display: grid;
+  gap: 16px;
+}
+
+.analysis-status {
+  display: grid;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid var(--banner-border);
+  border-radius: 10px;
+  background: var(--banner-bg);
+  color: var(--banner-text);
+  font-size: 12px;
+}
+
+.analysis-text {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.analysis-text strong {
+  color: var(--banner-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.analysis-status .progress-track {
+  height: 6px;
+  border-radius: 9px;
+  background: var(--hover-overlay);
+  overflow: hidden;
+}
+
+.analysis-status .progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent);
+  transition: width .4s ease;
+}
+
+.best-empty {
+  margin: 22px 0 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Table ---------- */
+
+.best-table-wrap {
+  margin: 18px -22px 0;
+  overflow-x: auto;
+}
+
+.best-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.best-table th,
+.best-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border-soft);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.best-table tr> :first-child {
+  padding-left: 22px;
+}
+
+.best-table tr> :last-child {
+  padding-right: 22px;
+}
+
+.best-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  color: var(--text-faint);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .6px;
+  text-transform: uppercase;
+}
+
+.best-table tbody tr {
+  transition: background .15s ease;
+}
+
+.best-table tbody tr:hover {
+  background: var(--surface-2);
+}
+
+.best-table tbody tr:last-child> * {
+  border-bottom: 0;
+}
+
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+}
+
+.sort-button:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.sort-button.active {
+  color: var(--accent-text);
+}
+
+.name-col {
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+}
+
+.best-table tbody .name-col {
+  color: var(--text);
+}
+
+.activity-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  border-radius: 4px;
+  color: inherit;
+}
+
+.activity-link-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-link svg {
+  flex-shrink: 0;
+  opacity: 0;
+  color: var(--accent-text);
+  transition: opacity .15s ease;
+}
+
+.activity-link:hover,
+.activity-link:focus-visible {
+  color: var(--accent-text);
+}
+
+.activity-link:hover .activity-link-text {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Icon appears on row hover so the table stays calm at rest. */
+.best-table tbody tr:hover .activity-link svg,
+.activity-link:focus-visible svg {
+  opacity: 1;
+}
+
+.rank-col {
+  width: 1%;
+  color: var(--text-faint);
+  font-weight: 700;
+}
+
+.muted-cell {
+  color: var(--text-muted);
+}
+
+.effort-col {
+  text-align: right;
+}
+
+.best-table thead .effort-col .sort-button {
+  flex-direction: row-reverse;
+}
+
+.best-table td.effort-col.empty {
+  color: var(--text-faint);
+}
+
+.effort-time,
+.effort-pace {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+}
+
+.effort-time {
+  font-weight: 600;
+}
+
+.effort-pace {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.best-table td.is-sorted {
+  background: color-mix(in srgb, var(--accent) 5%, transparent);
+}
+
+.best-table td.is-best .effort-time {
+  color: var(--accent-text);
+}
+
+.show-more {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px;
+  border: 0;
+  border-top: 1px solid var(--border-soft);
+  background: transparent;
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.show-more:hover {
+  background: var(--surface-2);
+}
+
+@media (max-width: 760px) {
+  .best-table-wrap {
+    margin: 14px -16px 0;
+  }
+
+  .best-table tr> :first-child {
+    padding-left: 16px;
+  }
+
+  .name-col {
+    max-width: 150px;
+  }
+}

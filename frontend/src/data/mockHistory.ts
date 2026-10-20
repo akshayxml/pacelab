@@ -2,18 +2,12 @@ import type { ActivityLogEntry } from "../types/activity";
 
 const YEARS = 5;
 
-/**
- * Weekly template: [sportType, minMinutes, maxMinutes, chance per week, km/h].
- * Speed 0 = no distance (gym, yoga).
- */
-const WEEKLY_PLAN: [string, number, number, number, number][] = [
-  ["Run", 30, 55, 1, 10.5],
-  ["Run", 35, 60, 0.9, 11],
-  ["Run", 70, 120, 0.8, 10],
-  ["Ride", 45, 150, 0.6, 26],
-  ["WeightTraining", 30, 50, 0.7, 0],
-  ["Swim", 30, 45, 0.35, 2.5],
-  ["Yoga", 20, 40, 0.4, 0],
+/** Weekly run template: [minMinutes, maxMinutes, chance per week, km/h]. */
+const WEEKLY_PLAN: [number, number, number, number][] = [
+  [30, 55, 1, 10.5], // easy
+  [35, 60, 0.9, 11], // tempo / intervals
+  [70, 120, 0.8, 10], // long run
+  [25, 40, 0.4, 10.5], // optional recovery
 ];
 
 /** Small deterministic PRNG so demo data is stable across reloads. */
@@ -41,7 +35,7 @@ function buildMockHistory(now = new Date()): ActivityLogEntry[] {
     // Later years train a bit more, so the lines visibly diverge.
     const yearBoost = 1 + (week.getUTCFullYear() - firstYear) * 0.12;
 
-    for (const [sportType, min, max, chance, kmh] of WEEKLY_PLAN) {
+    for (const [min, max, chance, kmh] of WEEKLY_PLAN) {
       if (random() > chance) continue;
       const day = new Date(week);
       day.setUTCDate(day.getUTCDate() + Math.floor(random() * 7));
@@ -52,7 +46,6 @@ function buildMockHistory(now = new Date()): ActivityLogEntry[] {
       const distanceM = Math.round((minutes / 60) * kmh * (0.9 + random() * 0.2) * 1000);
       entries.push({
         date,
-        sportType,
         movingTimeS: Math.round(minutes * 60),
         distanceM,
       });

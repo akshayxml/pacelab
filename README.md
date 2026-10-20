@@ -62,7 +62,8 @@ npm run dev            # http://localhost:5173 (proxies /api -> :4000)
 | POST | `/api/auth/strava/disconnect` | Strava only: revoke access + end session |
 | GET | `/api/activities/recent?limit=10` | `RunActivity[]` |
 | GET | `/api/activities/weekly-stats?weeks=8` | `WeeklyStats[]` |
-| GET | `/api/activities/history` | `ActivityLogEntry[]`: full history, all sports (time, distance) |
+| GET | `/api/activities/history` | `ActivityLogEntry[]`: every run (road, trail, virtual) for yearly progress |
+| GET | `/api/activities/best-efforts` | Fastest 1K to 50K inside each run. Analysed in the background from activity streams and cached in `backend/.cache/`; poll while `progress.running` |
 
 Credentials and tokens stay on the server; with Strava the browser only holds
 an opaque `httpOnly` session cookie. Sessions are in-memory, so restart =

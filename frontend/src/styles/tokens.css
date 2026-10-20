@@ -37,10 +37,13 @@
   --chart-cursor: rgba(139, 92, 246, 0.10);
   --chart-bar: #8b5cf6;
   --chart-line: #a78bfa;
-  --year-2: #38bdf8;
-  --year-3: #f59e0b;
-  --year-4: #f472b6;
-  --year-old: #5c5c66;
+  /* Yearly progress lines: current year uses --chart-bar (violet). */
+  --year-2: #38bdf8; /* blue */
+  --year-3: #fb923c; /* orange */
+  --year-4: #f472b6; /* pink */
+  --year-5: #34d399; /* green */
+  --year-6: #facc15; /* yellow */
+  --year-old: #5c5c66; /* 7th year and older */
 
   --run-easy-bg: rgba(139, 92, 246, 0.14);
   --run-easy: #b49cff;
@@ -93,8 +96,10 @@
   --chart-bar: #7c3aed;
   --chart-line: #8b5cf6;
   --year-2: #0284c7;
-  --year-3: #d97706;
+  --year-3: #ea580c;
   --year-4: #db2777;
+  --year-5: #059669;
+  --year-6: #ca8a04;
   --year-old: #b4b4bc;
 
   --run-easy-bg: #f1ebfe;

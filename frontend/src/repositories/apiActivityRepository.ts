@@ -1,6 +1,7 @@
 import { apiClient } from "../api/apiClient";
 import type {
   ActivityLogEntry,
+  BestEffortsResponse,
   RunActivity,
   WeeklyStats,
 } from "../types/activity";
@@ -20,6 +21,9 @@ interface HistoryCacheEntry {
 
 let historyCache: HistoryCacheEntry | null = null;
 
+/** Only complete results are kept; partial ones are still being analysed. */
+let bestEffortsCache: { data: BestEffortsResponse; fetchedAt: number } | null = null;
+
 function isFresh(cache: HistoryCacheEntry | null): cache is HistoryCacheEntry {
   return cache !== null && Date.now() - cache.fetchedAt < HISTORY_TTL_MS;
 }
@@ -30,6 +34,7 @@ function isFresh(cache: HistoryCacheEntry | null): cache is HistoryCacheEntry {
  */
 export function clearActivityCache(): void {
   historyCache = null;
+  bestEffortsCache = null;
 }
 
 export const apiActivityRepository: ActivityRepository = {
@@ -72,5 +77,23 @@ export const apiActivityRepository: ActivityRepository = {
 
   peekHistory() {
     return isFresh(historyCache) ? historyCache.data : undefined;
+  },
+
+  async getBestEfforts() {
+    const data = await apiClient.get<BestEffortsResponse>(
+      "/api/activities/best-efforts",
+    );
+    const { analysed, total, running } = data.progress;
+    if (!running && analysed >= total) {
+      bestEffortsCache = { data, fetchedAt: Date.now() };
+    }
+    return data;
+  },
+
+  peekBestEfforts() {
+    return bestEffortsCache &&
+      Date.now() - bestEffortsCache.fetchedAt < HISTORY_TTL_MS
+      ? bestEffortsCache.data
+      : undefined;
   },
 };

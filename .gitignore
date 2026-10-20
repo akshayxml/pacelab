@@ -30,3 +30,6 @@ dist-ssr
 
 # Vite cache
 .vite
+
+# Local data caches (computed best efforts)
+.cache

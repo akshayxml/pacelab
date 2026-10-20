@@ -11,9 +11,11 @@ import {
   Moon,
   Sun,
   TrendingUp,
+  Trophy,
   X,
 } from "lucide-react";
 
+import BestEfforts from "./components/BestEfforts";
 import MetricCard from "./components/MetricCard";
 import MileageChart from "./components/MileageChart";
 import PaceChart from "./components/PaceChart";
@@ -29,7 +31,7 @@ import { mockActivityRepository } from "./repositories/mockActivityRepository";
 import type { RunActivity, WeeklyStats } from "./types/activity";
 
 
-type Tab = "overview" | "activities" | "progress";
+type Tab = "overview" | "activities" | "progress" | "best";
 
 const TABS = {
   overview: {
@@ -51,7 +53,14 @@ const TABS = {
     icon: ChartLine,
     eyebrow: "YEAR OVER YEAR",
     title: "Yearly progress",
-    subtitle: "How your training time and distance build up across each year.",
+    subtitle: "How your running distance and time build up across each year.",
+  },
+  best: {
+    label: "Best efforts",
+    icon: Trophy,
+    eyebrow: "PERSONAL RECORDS",
+    title: "Best efforts",
+    subtitle: "Your fastest times over standard distances, found inside every run.",
   },
 } as const;
 
@@ -385,13 +394,23 @@ function App() {
           </div>
         )}
 
-        {loadingDashboard && activeTab !== "progress" && (
+        {activeTab === "best" && !isCheckingConnection && (
+          <div className="tab-panel" key="best">
+            <BestEfforts
+              key={isConnected ? "live" : "demo"}
+              repository={repository}
+              onUnauthorized={handleHistoryUnauthorized}
+            />
+          </div>
+        )}
+
+        {loadingDashboard && activeTab !== "progress" && activeTab !== "best" && (
           <div className="panel loading-panel">
             Loading dashboard data...
           </div>
         )}
 
-        {dashboardError && activeTab !== "progress" && (
+        {dashboardError && activeTab !== "progress" && activeTab !== "best" && (
           <div className="panel error-panel" role="alert">
             {dashboardError}
           </div>

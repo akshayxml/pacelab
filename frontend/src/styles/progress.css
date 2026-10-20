@@ -1,38 +1,8 @@
-/* Yearly progress tab: activity filter chips, year legends, stacked charts. */
+/* Yearly progress tab: year legends and stacked charts. */
 
 .progress-stack {
   display: grid;
   gap: 16px;
-}
-
-.sport-filter {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.sport-chip {
-  padding: 7px 13px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background .15s ease, color .15s ease, border-color .15s ease;
-}
-
-.sport-chip:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-.sport-chip.active {
-  background: var(--accent-soft);
-  border-color: transparent;
-  color: var(--accent-soft-text);
-  font-weight: 700;
 }
 
 .year-legend {

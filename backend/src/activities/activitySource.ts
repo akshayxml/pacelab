@@ -3,7 +3,8 @@ import { config } from "../config.js";
 import { getAuth, requireStravaSession } from "../auth/requireStravaSession.js";
 import * as intervals from "../intervals/intervalsClient.js";
 import * as strava from "../strava/stravaClient.js";
-import type { SourceActivity } from "../types/activity.js";
+import type { DataProvider } from "../config.js";
+import type { DistanceStream, SourceActivity } from "../types/activity.js";
 
 const RECENT_WINDOW_DAYS = 90;
 /** Full-history cap for Strava: 25 pages x 200 = 5,000 activities. */
@@ -13,34 +14,41 @@ const STRAVA_HISTORY_MAX_PAGES = 25;
 export interface ActivitySource {
   /** Cache namespace (per-session for Strava, global for Intervals). */
   cacheScope: string;
+  provider: DataProvider;
   /** Most recent activities, newest first. */
   listRecent(): Promise<SourceActivity[]>;
   /** All activities since `after` (Unix seconds). */
   listSince(after: number): Promise<SourceActivity[]>;
   /** The athlete's entire activity history. */
   listAll(): Promise<SourceActivity[]>;
+  /** Time + distance samples for one activity (null if it has no GPS/distance). */
+  getDistanceStream(activityId: string): Promise<DistanceStream | null>;
 }
 
 function stravaSource(sessionId: string, accessToken: string): ActivitySource {
   return {
     cacheScope: sessionId,
+    provider: "strava",
     listRecent: () => strava.listAthleteActivities(accessToken, { perPage: 100 }),
     listSince: (after) => strava.listAllAthleteActivities(accessToken, { after }),
     listAll: () =>
       strava.listAllAthleteActivities(accessToken, {
         maxPages: STRAVA_HISTORY_MAX_PAGES,
       }),
+    getDistanceStream: (id) => strava.getDistanceStream(accessToken, id),
   };
 }
 
 const intervalsSource: ActivitySource = {
   cacheScope: "intervals",
+  provider: "intervals",
   listRecent: () =>
     intervals.listActivities(
       Math.floor(Date.now() / 1000) - RECENT_WINDOW_DAYS * 86_400,
     ),
   listSince: (after) => intervals.listActivities(after),
   listAll: () => intervals.listActivities(0),
+  getDistanceStream: (id) => intervals.getDistanceStream(id),
 };
 
 export function getActivitySource(res: Response): ActivitySource {

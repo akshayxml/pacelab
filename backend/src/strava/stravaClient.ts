@@ -1,6 +1,6 @@
 import { stravaConfig } from "../config.js";
 import { UpstreamApiError } from "../errors.js";
-import type { SourceActivity } from "../types/activity.js";
+import type { DistanceStream, SourceActivity } from "../types/activity.js";
 import type {
   StravaSummaryActivity,
   StravaTokenResponse,
@@ -107,6 +107,10 @@ export function toSourceActivity(activity: StravaSummaryActivity): SourceActivit
     isRace: activity.workout_type === 1,
     isLongRun: activity.workout_type === 2,
     isWorkout: activity.workout_type === 3,
+    link: {
+      url: `https://www.strava.com/activities/${activity.id}`,
+      label: "Strava",
+    },
   };
 }
 
@@ -156,4 +160,30 @@ export async function listAllAthleteActivities(
     if (batch.length < perPage) break;
   }
   return all;
+}
+
+/**
+ * Time + distance streams for one activity, or null when the activity has
+ * no distance data. Costs one request against the rate limit.
+ */
+export async function getDistanceStream(
+  accessToken: string,
+  activityId: string,
+): Promise<DistanceStream | null> {
+  let streams: Partial<Record<"time" | "distance", { data: number[] }>>;
+  try {
+    streams = await apiGet(
+      accessToken,
+      `/activities/${encodeURIComponent(activityId)}/streams`,
+      { keys: "time,distance", key_by_type: "true" },
+    );
+  } catch (err) {
+    if (err instanceof StravaApiError && err.status === 404) return null;
+    throw err;
+  }
+
+  const time = streams.time?.data;
+  const distance = streams.distance?.data;
+  if (!time?.length || !distance?.length) return null;
+  return { time, distance };
 }

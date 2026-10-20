@@ -2,11 +2,26 @@ import { Router } from "express";
 import {
   aggregateWeeklyStats,
   isRun,
+  localDate,
   toRunActivity,
   toLogEntry,
   weeklyWindowStart,
 } from "../activities/activityMapper.js";
 import { activityCache } from "../activities/activityCache.js";
+import {
+  BEST_EFFORT_DISTANCES,
+  MIN_BEST_EFFORT_METERS,
+} from "../bestEfforts/bestEfforts.js";
+import {
+  ensureBestEfforts,
+  jobStatus,
+  storeKey,
+} from "../bestEfforts/bestEffortJob.js";
+import { bestEffortStore } from "../bestEfforts/bestEffortStore.js";
+import type {
+  BestEffortActivity,
+  BestEffortsResponse,
+} from "../types/activity.js";
 import {
   getActivitySource,
   resolveActivitySource,
@@ -55,8 +70,8 @@ const HISTORY_TTL_MS = 30 * 60 * 1000;
 
 /**
  * GET /api/activities/history
- * The athlete's entire history (all sport types) for the yearly progress
- * charts: time and distance.
+ * Every run in the athlete's history (any run type: road, trail, virtual)
+ * for the yearly progress charts: time and distance.
  */
 activityRouter.get("/history", async (_req, res) => {
   const source = getActivitySource(res);
@@ -68,5 +83,72 @@ activityRouter.get("/history", async (_req, res) => {
     HISTORY_TTL_MS,
   );
 
-  res.json(activities.map(toLogEntry));
+  res.json(activities.filter(isRun).map(toLogEntry));
+});
+
+/**
+ * GET /api/activities/best-efforts
+ * Fastest time per standard distance within each run. Streams are
+ * analysed in the background and persisted; poll until `progress.running`
+ * is false.
+ */
+activityRouter.get("/best-efforts", async (_req, res) => {
+  const source = getActivitySource(res);
+  const [activities, store] = await Promise.all([
+    activityCache.getOrFetch(
+      source.cacheScope,
+      "history",
+      () => source.listAll(),
+      HISTORY_TTL_MS,
+    ),
+    bestEffortStore.ready(),
+  ]);
+
+  // Newest first, so recent activities appear early during the first analysis.
+  const candidates = activities.filter(
+    (a) => isRun(a) && a.distanceM >= MIN_BEST_EFFORT_METERS,
+  );
+  ensureBestEfforts(source, candidates.map((a) => a.id));
+
+  let analysed = 0;
+  const rows: BestEffortActivity[] = [];
+  for (const activity of candidates) {
+    const key = storeKey(source.provider, activity.id);
+    if (!store.has(key)) continue;
+    analysed++;
+    const stored = store.get(key);
+    if (!stored) continue;
+
+    // Streams can read slightly longer than the recorded distance; don't
+    // report efforts the activity didn't actually cover (1% tolerance).
+    const efforts: Record<string, number | null> = {};
+    for (const { key: distanceKey, meters } of BEST_EFFORT_DISTANCES) {
+      efforts[distanceKey] =
+        meters <= activity.distanceM * 1.01 ? stored[distanceKey] ?? null : null;
+    }
+    if (Object.values(efforts).every((v) => v === null)) continue;
+    rows.push({
+      id: activity.id,
+      name: activity.name,
+      date: localDate(activity),
+      distanceM: Math.round(activity.distanceM),
+      link: activity.link,
+      efforts,
+    });
+  }
+
+  const status = jobStatus(source.provider);
+  res.json({
+    distances: BEST_EFFORT_DISTANCES,
+    activities: rows,
+    progress: {
+      analysed,
+      total: candidates.length,
+      // Still working if the job runs or there is unanalysed work left.
+      running: status.running && analysed < candidates.length,
+      rateLimitedUntil: status.rateLimitedUntil
+        ? new Date(status.rateLimitedUntil).toISOString()
+        : null,
+    },
+  } satisfies BestEffortsResponse);
 });

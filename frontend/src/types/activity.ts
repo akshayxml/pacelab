@@ -31,12 +31,46 @@ export interface Athlete {
   profileImageUrl: string | null;
 }
 
-/** Minimal per-activity record (all sport types) for the yearly progress charts. */
+/** Minimal per-run record for the yearly progress charts. */
 export interface ActivityLogEntry {
   /** Local calendar date, YYYY-MM-DD. */
   date: string;
-  /** e.g. "Run", "Ride", "WeightTraining". */
-  sportType: string;
   movingTimeS: number;
   distanceM: number;
+}
+
+export interface BestEffortDistance {
+  key: string;
+  label: string;
+  meters: number;
+}
+
+/** Where the activity can be viewed in its original app. */
+export interface ActivityLink {
+  url: string;
+  /** e.g. "Garmin Connect", "Strava", "Intervals.icu". */
+  label: string;
+}
+
+export interface BestEffortActivity {
+  id: string;
+  name: string;
+  /** Local calendar date, YYYY-MM-DD. */
+  date: string;
+  distanceM: number;
+  link: ActivityLink;
+  /** Fastest seconds per distance key; null if the activity was too short. */
+  efforts: Record<string, number | null>;
+}
+
+export interface BestEffortsResponse {
+  distances: BestEffortDistance[];
+  activities: BestEffortActivity[];
+  progress: {
+    analysed: number;
+    total: number;
+    running: boolean;
+    /** ISO time when analysis resumes after an upstream rate limit. */
+    rateLimitedUntil: string | null;
+  };
 }

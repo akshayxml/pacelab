@@ -132,11 +132,14 @@ export function weeklyWindowStart(weeks: number, now: Date = new Date()): number
   return Math.floor(start.getTime() / 1000) - 86_400;
 }
 
+/** Local calendar date as YYYY-MM-DD. */
+export function localDate(activity: SourceActivity): string {
+  return parseLocalDate(activity.startDateLocal).toISOString().slice(0, 10);
+}
+
 export function toLogEntry(activity: SourceActivity): ActivityLogEntry {
   return {
-    date: parseLocalDate(activity.startDateLocal).toISOString().slice(0, 10),
-    // Trail, virtual etc. runs are grouped as "Run", matching isRun().
-    sportType: isRun(activity) ? "Run" : activity.sportType,
+    date: localDate(activity),
     movingTimeS: activity.movingTimeS,
     distanceM: Math.round(activity.distanceM),
   };

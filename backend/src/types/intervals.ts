@@ -19,6 +19,12 @@ export interface IntervalsActivity {
   average_heartrate?: number | null;
   /** e.g. "GARMIN_CONNECT", "STRAVA", "UPLOAD". */
   source?: string | null;
+  /**
+   * ID in the source system. For Garmin Connect this is usually the numeric
+   * activity ID, but can be a file name (which may contain the user's email).
+   */
+  external_id?: string | null;
+  strava_id?: string | number | null;
   /** True if the athlete marked this activity as a race. */
   race?: boolean | null;
 }

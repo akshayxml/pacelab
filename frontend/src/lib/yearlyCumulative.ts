@@ -11,14 +11,16 @@ const MONTH_NAMES = [
 ];
 
 /**
- * Newest year first: current year in the accent, the next three in distinct
- * colours, everything older in a muted grey so many years stay readable.
+ * Newest year first: current year in violet, the next five in distinct hues
+ * (blue, orange, pink, green, yellow); the 7th year and older in muted grey.
  */
 const RECENT_YEAR_COLORS = [
   "var(--chart-bar)",
   "var(--year-2)",
   "var(--year-3)",
   "var(--year-4)",
+  "var(--year-5)",
+  "var(--year-6)",
 ];
 
 export function yearStyle(index: number) {
@@ -28,11 +30,6 @@ export function yearStyle(index: number) {
     width: index === 0 ? 2.75 : recent ? 1.75 : 1.25,
     opacity: recent ? 1 : 0.7,
   };
-}
-
-/** "WeightTraining" -> "Weight Training". */
-export function sportLabel(sportType: string): string {
-  return sportType.replace(/([a-z])([A-Z])/g, "$1 $2");
 }
 
 /** Local calendar date as YYYY-MM-DD (not UTC, unlike toISOString). */

@@ -39,16 +39,55 @@ export interface ConnectionStatus {
 }
 
 /**
- * Minimal per-activity record (all sport types) for the yearly progress
- * charts. Kept small because the athlete's full history is sent at once.
+ * Minimal per-run record for the yearly progress charts. Kept small because
+ * the athlete's full history is sent at once.
  */
 export interface ActivityLogEntry {
   /** Local calendar date, YYYY-MM-DD. */
   date: string;
-  /** e.g. "Run", "Ride", "WeightTraining". */
-  sportType: string;
   movingTimeS: number;
   distanceM: number;
+}
+
+export interface BestEffortActivity {
+  id: string;
+  name: string;
+  /** Local calendar date, YYYY-MM-DD. */
+  date: string;
+  distanceM: number;
+  link: ActivityLink;
+  /** Fastest seconds per distance key (see `distances`); null if too short. */
+  efforts: Record<string, number | null>;
+}
+
+export interface BestEffortsResponse {
+  distances: { key: string; label: string; meters: number }[];
+  /** Analysed activities that have at least one best effort. */
+  activities: BestEffortActivity[];
+  progress: {
+    /** Activities analysed so far (including ones without distance data). */
+    analysed: number;
+    /** Activities long enough to analyse. */
+    total: number;
+    running: boolean;
+    /** ISO time when analysis resumes after an upstream rate limit. */
+    rateLimitedUntil: string | null;
+  };
+}
+
+/** Per-second samples used to find best efforts within an activity. */
+export interface DistanceStream {
+  /** Seconds since the activity started. */
+  time: number[];
+  /** Cumulative meters, same length as `time`. */
+  distance: number[];
+}
+
+/** Where the activity can be viewed in its original app. */
+export interface ActivityLink {
+  url: string;
+  /** e.g. "Garmin Connect", "Strava", "Intervals.icu". */
+  label: string;
 }
 
 /**
@@ -72,4 +111,6 @@ export interface SourceActivity {
   isRace: boolean;
   isLongRun: boolean;
   isWorkout: boolean;
+  /** Link to the activity in the app it was recorded/synced from. */
+  link: ActivityLink;
 }
