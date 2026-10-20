@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
-import { ApiError } from "../api/apiClient";
+import { useMemo, useState } from "react";
+import { useRunHistory } from "../hooks/useRunHistory";
 import { buildCumulativeRows } from "../lib/yearlyCumulative";
 import type { ActivityRepository } from "../repositories/activityRepository";
-import type { ActivityLogEntry } from "../types/activity";
 import CumulativeYearChart from "./CumulativeYearChart";
 
 interface YearlyProgressProps {
@@ -34,39 +33,8 @@ export default function YearlyProgress({
   repository,
   onUnauthorized,
 }: YearlyProgressProps) {
-  // Start from cached data when available so revisiting the tab is instant.
-  const [entries, setEntries] = useState<ActivityLogEntry[] | null>(
-    () => repository.peekHistory() ?? null,
-  );
-  const [error, setError] = useState<string | null>(null);
+  const { entries, error } = useRunHistory(repository, onUnauthorized);
   const [hiddenYears, setHiddenYears] = useState<Set<number>>(new Set());
-
-  useEffect(() => {
-    // The repository caches this; when already loaded there's nothing to do.
-    if (repository.peekHistory()) return;
-
-    let cancelled = false;
-    repository
-      .getHistory()
-      .then((data) => {
-        if (!cancelled) setEntries(data);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        if (err instanceof ApiError && err.isUnauthorized) {
-          onUnauthorized();
-          return;
-        }
-        setError(
-          err instanceof ApiError && err.status === 429
-            ? "Rate limit reached. Please try again in a few minutes."
-            : "Failed to load activity history.",
-        );
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [repository, onUnauthorized]);
 
   const years = useMemo(() => {
     const unique = new Set((entries ?? []).map((e) => Number(e.date.slice(0, 4))));

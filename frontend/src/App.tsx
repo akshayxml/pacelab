@@ -82,6 +82,11 @@ function App() {
   const [activeTab, setActiveTab] = useState<Tab>(tabFromHash);
   const page = TABS[activeTab];
 
+  // Per-tab browser title, e.g. "Best efforts · PaceLab".
+  useEffect(() => {
+    document.title = `${page.label} · PaceLab`;
+  }, [page.label]);
+
   useEffect(() => {
     const onHashChange = () => setActiveTab(tabFromHash());
     window.addEventListener("hashchange", onHashChange);
@@ -372,7 +377,11 @@ function App() {
             </section>
 
             <section className="charts-grid">
-              <MileageChart data={weeklyStats} />
+              <MileageChart
+                weekly={weeklyStats}
+                repository={repository}
+                onUnauthorized={handleHistoryUnauthorized}
+              />
               <PaceChart data={weeklyStats} />
             </section>
           </div>
