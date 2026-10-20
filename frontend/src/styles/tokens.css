@@ -37,6 +37,10 @@
   --chart-cursor: rgba(139, 92, 246, 0.10);
   --chart-bar: #8b5cf6;
   --chart-line: #a78bfa;
+  --year-2: #38bdf8;
+  --year-3: #f59e0b;
+  --year-4: #f472b6;
+  --year-old: #5c5c66;
 
   --run-easy-bg: rgba(139, 92, 246, 0.14);
   --run-easy: #b49cff;
@@ -88,6 +92,10 @@
   --chart-cursor: #f4f0fe;
   --chart-bar: #7c3aed;
   --chart-line: #8b5cf6;
+  --year-2: #0284c7;
+  --year-3: #d97706;
+  --year-4: #db2777;
+  --year-old: #b4b4bc;
 
   --run-easy-bg: #f1ebfe;
   --run-easy: #7c3aed;

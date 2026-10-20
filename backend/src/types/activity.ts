@@ -39,6 +39,19 @@ export interface ConnectionStatus {
 }
 
 /**
+ * Minimal per-activity record (all sport types) for the yearly progress
+ * charts. Kept small because the athlete's full history is sent at once.
+ */
+export interface ActivityLogEntry {
+  /** Local calendar date, YYYY-MM-DD. */
+  date: string;
+  /** e.g. "Run", "Ride", "WeightTraining". */
+  sportType: string;
+  movingTimeS: number;
+  distanceM: number;
+}
+
+/**
  * Provider-agnostic activity shape. Each provider client normalizes its raw
  * API response into this before mapping to RunActivity / WeeklyStats.
  */

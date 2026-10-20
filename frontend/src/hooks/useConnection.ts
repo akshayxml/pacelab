@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { authApi, PROVIDER_LABELS } from "../api/authApi";
+import { clearActivityCache } from "../repositories/apiActivityRepository";
 import type { Athlete, DataProvider } from "../types/activity";
 
 export type ConnectionState =
@@ -58,6 +59,7 @@ export function useConnection() {
 
   /** Call when an API request returns 401 (e.g. token revoked). */
   const markDisconnected = useCallback((message?: string) => {
+    clearActivityCache();
     setAthlete(null);
     setState("disconnected");
     if (message) setNotice(message);

@@ -1,4 +1,5 @@
 import type {
+  ActivityLogEntry,
   RunActivity,
   RunType,
   SourceActivity,
@@ -129,4 +130,14 @@ export function weeklyWindowStart(weeks: number, now: Date = new Date()): number
   start.setUTCDate(start.getUTCDate() - (weeks - 1) * 7);
   // Pad a day to account for timezone offset between UTC and local start time.
   return Math.floor(start.getTime() / 1000) - 86_400;
+}
+
+export function toLogEntry(activity: SourceActivity): ActivityLogEntry {
+  return {
+    date: parseLocalDate(activity.startDateLocal).toISOString().slice(0, 10),
+    // Trail, virtual etc. runs are grouped as "Run", matching isRun().
+    sportType: isRun(activity) ? "Run" : activity.sportType,
+    movingTimeS: activity.movingTimeS,
+    distanceM: Math.round(activity.distanceM),
+  };
 }

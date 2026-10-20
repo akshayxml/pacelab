@@ -1,8 +1,9 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Activity,
   CalendarDays,
+  ChartLine,
   Footprints,
   Gauge,
   LayoutDashboard,
@@ -17,6 +18,7 @@ import MetricCard from "./components/MetricCard";
 import MileageChart from "./components/MileageChart";
 import PaceChart from "./components/PaceChart";
 import RecentRuns from "./components/RecentRuns";
+import YearlyProgress from "./components/YearlyProgress";
 
 import { ApiError } from "./api/apiClient";
 import { STRAVA_LOGIN_URL } from "./api/authApi";
@@ -27,7 +29,7 @@ import { mockActivityRepository } from "./repositories/mockActivityRepository";
 import type { RunActivity, WeeklyStats } from "./types/activity";
 
 
-type Tab = "overview" | "activities";
+type Tab = "overview" | "activities" | "progress";
 
 const TABS = {
   overview: {
@@ -44,11 +46,19 @@ const TABS = {
     title: "Recent activities",
     subtitle: "Your latest running sessions, newest first.",
   },
+  progress: {
+    label: "Yearly progress",
+    icon: ChartLine,
+    eyebrow: "YEAR OVER YEAR",
+    title: "Yearly progress",
+    subtitle: "How your training time and distance build up across each year.",
+  },
 } as const;
 
 /** The active tab lives in the URL hash so it survives reloads and back/forward. */
 function tabFromHash(): Tab {
-  return window.location.hash === "#activities" ? "activities" : "overview";
+  const hash = window.location.hash.slice(1);
+  return hash in TABS ? (hash as Tab) : "overview";
 }
 
 function formatPaceMinutes(minutes: number | null | undefined): string {
@@ -71,6 +81,11 @@ function App() {
   const { isConnected, markDisconnected } = connection;
   const providerLabel = connection.providerLabel ?? "your data source";
   const isCheckingConnection = connection.state === "checking";
+
+  const handleHistoryUnauthorized = useCallback(
+    () => markDisconnected(`Your ${providerLabel} session expired. Please reconnect.`),
+    [markDisconnected, providerLabel],
+  );
 
   const repository = useMemo(
     () => (isConnected ? apiActivityRepository : mockActivityRepository),
@@ -360,13 +375,23 @@ function App() {
           </div>
         )}
 
-        {loadingDashboard && (
+        {activeTab === "progress" && !isCheckingConnection && (
+          <div className="tab-panel" key="progress">
+            <YearlyProgress
+              key={isConnected ? "live" : "demo"}
+              repository={repository}
+              onUnauthorized={handleHistoryUnauthorized}
+            />
+          </div>
+        )}
+
+        {loadingDashboard && activeTab !== "progress" && (
           <div className="panel loading-panel">
             Loading dashboard data...
           </div>
         )}
 
-        {dashboardError && (
+        {dashboardError && activeTab !== "progress" && (
           <div className="panel error-panel" role="alert">
             {dashboardError}
           </div>

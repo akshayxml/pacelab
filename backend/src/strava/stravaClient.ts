@@ -132,15 +132,21 @@ export async function listAthleteActivities(
   return raw.map(toSourceActivity);
 }
 
-/** Fetches every page within the time window. */
+/**
+ * Fetches every page within the time window, up to `maxPages` x 200
+ * activities. Each page costs one request against Strava's rate limit.
+ */
 export async function listAllAthleteActivities(
   accessToken: string,
-  options: Omit<ListActivitiesOptions, "page" | "perPage"> = {},
+  {
+    maxPages = 10,
+    ...options
+  }: Omit<ListActivitiesOptions, "page" | "perPage"> & { maxPages?: number } = {},
 ): Promise<SourceActivity[]> {
   const perPage = 200;
   const all: SourceActivity[] = [];
 
-  for (let page = 1; page <= 10; page++) {
+  for (let page = 1; page <= maxPages; page++) {
     const batch = await listAthleteActivities(accessToken, {
       ...options,
       page,

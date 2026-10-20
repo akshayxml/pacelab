@@ -1,0 +1,108 @@
+/* Yearly progress tab: activity filter chips, year legends, stacked charts. */
+
+.progress-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.sport-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sport-chip {
+  padding: 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+.sport-chip:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.sport-chip.active {
+  background: var(--accent-soft);
+  border-color: transparent;
+  color: var(--accent-soft-text);
+  font-weight: 700;
+}
+
+.year-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 22px;
+  margin-top: 22px;
+  font-size: 12px;
+}
+
+.year-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background .15s ease, opacity .15s ease;
+}
+
+.year-legend-item:hover {
+  background: var(--surface-2);
+}
+
+.year-legend-item.is-hidden {
+  opacity: .4;
+}
+
+.year-legend-item.is-hidden strong {
+  text-decoration: line-through;
+}
+
+.year-legend-item span:last-child {
+  color: var(--text-muted);
+}
+
+.year-swatch {
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.year-delta {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.progress-chart {
+  height: 320px;
+}
+
+@media (min-width: 1500px) {
+  .progress-chart {
+    height: 380px;
+  }
+}
+
+@media (max-width: 760px) {
+  .progress-chart {
+    height: 260px;
+  }
+
+  .year-delta {
+    margin-left: 0;
+    width: 100%;
+  }
+}

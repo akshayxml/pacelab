@@ -3,6 +3,7 @@ import {
   aggregateWeeklyStats,
   isRun,
   toRunActivity,
+  toLogEntry,
   weeklyWindowStart,
 } from "../activities/activityMapper.js";
 import { activityCache } from "../activities/activityCache.js";
@@ -47,4 +48,25 @@ activityRouter.get("/weekly-stats", async (req, res) => {
   );
 
   res.json(aggregateWeeklyStats(activities, weeks));
+});
+
+/** Full history is the most expensive upstream call, so keep it longer. */
+const HISTORY_TTL_MS = 30 * 60 * 1000;
+
+/**
+ * GET /api/activities/history
+ * The athlete's entire history (all sport types) for the yearly progress
+ * charts: time and distance.
+ */
+activityRouter.get("/history", async (_req, res) => {
+  const source = getActivitySource(res);
+
+  const activities = await activityCache.getOrFetch(
+    source.cacheScope,
+    "history",
+    () => source.listAll(),
+    HISTORY_TTL_MS,
+  );
+
+  res.json(activities.map(toLogEntry));
 });

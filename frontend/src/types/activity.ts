@@ -30,3 +30,13 @@ export interface Athlete {
   lastName: string;
   profileImageUrl: string | null;
 }
+
+/** Minimal per-activity record (all sport types) for the yearly progress charts. */
+export interface ActivityLogEntry {
+  /** Local calendar date, YYYY-MM-DD. */
+  date: string;
+  /** e.g. "Run", "Ride", "WeightTraining". */
+  sportType: string;
+  movingTimeS: number;
+  distanceM: number;
+}

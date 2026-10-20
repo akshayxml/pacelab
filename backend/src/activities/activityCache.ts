@@ -1,6 +1,6 @@
 import type { SourceActivity } from "../types/activity.js";
 
-const TTL_MS = 5 * 60 * 1000;
+const DEFAULT_TTL_MS = 5 * 60 * 1000;
 
 interface CacheEntry {
   activities: SourceActivity[];
@@ -19,10 +19,11 @@ class ActivityCache {
     scope: string,
     key: string,
     fetcher: () => Promise<SourceActivity[]>,
+    ttlMs: number = DEFAULT_TTL_MS,
   ): Promise<SourceActivity[]> {
     const cacheKey = `${scope}:${key}`;
     const entry = this.entries.get(cacheKey);
-    if (entry && Date.now() - entry.fetchedAt < TTL_MS) {
+    if (entry && Date.now() - entry.fetchedAt < ttlMs) {
       return entry.activities;
     }
 
