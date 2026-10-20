@@ -1,0 +1,14 @@
+services:
+  pacelab:
+    build: .
+    restart: unless-stopped
+    env_file: backend/.env
+    # Localhost only: never reachable from the internet directly.
+    # Tailscale Serve proxies your tailnet to it over HTTPS.
+    ports:
+      - "127.0.0.1:4000:4000"
+    volumes:
+      - pacelab-data:/data
+
+volumes:
+  pacelab-data:

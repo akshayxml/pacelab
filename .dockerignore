@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.cache
+**/.vite
+**/*.log
+# Secrets are passed at runtime (compose env_file), never baked into the image.
+**/.env
+**/.env.*
+!**/.env.example
+.git

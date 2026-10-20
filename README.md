@@ -68,3 +68,48 @@ npm run dev            # http://localhost:5173 (proxies /api -> :4000)
 Credentials and tokens stay on the server; with Strava the browser only holds
 an opaque `httpOnly` session cookie. Sessions are in-memory, so restart =
 reconnect.
+
+## Self-hosting (free, private)
+
+PaceLab with Intervals.icu shows **your** data to anyone who can reach it, so
+it should never be on the public internet. The setup below costs nothing:
+one small always-free VM, reachable only from your own devices via
+[Tailscale](https://tailscale.com) (free for personal use).
+
+```
+Your phone / laptop ──Tailscale (HTTPS)──▶ VM: tailscale serve ──▶ 127.0.0.1:4000 (Docker)
+```
+
+### 1. Get a free VM
+Any always-on Linux box works. Free options:
+- **Google Cloud e2-micro**: free in `us-west1`, `us-central1` or `us-east1`
+  with a 30 GB standard disk. Don't reserve a static IP (that's charged).
+- **Oracle Cloud Always Free** (Ampere ARM, more RAM).
+- An old laptop or Raspberry Pi at home.
+
+Leave the cloud firewall closed: no inbound ports besides SSH are needed.
+
+### 2. Install Docker and Tailscale on it
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+curl -fsSL https://tailscale.com/install.sh | sh
+sudo tailscale up
+```
+Install Tailscale on your phone/laptop too and sign in with the same account.
+
+### 3. Deploy
+```bash
+git clone https://github.com/akshayxml/pacelab.git && cd pacelab
+cp backend/.env.example backend/.env   # set DATA_PROVIDER=intervals and INTERVALS_API_KEY
+sudo docker compose up -d --build
+sudo tailscale serve --bg 4000
+```
+`tailscale serve status` prints the URL, e.g. `https://<vm-name>.<tailnet>.ts.net`.
+The container only listens on `127.0.0.1`, so it's unreachable except through
+your tailnet. On a 1 GB VM, add swap first if the build runs out of memory.
+
+### Updating
+```bash
+git pull && sudo docker compose up -d --build
+```
+Computed best efforts persist in the `pacelab-data` volume across updates.

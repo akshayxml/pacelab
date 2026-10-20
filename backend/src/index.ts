@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import cookieParser from "cookie-parser";
 import express, {
   type NextFunction,
@@ -9,9 +11,16 @@ import { UpstreamApiError } from "./errors.js";
 import { activityRouter } from "./routes/activityRoutes.js";
 import { authRouter } from "./routes/authRoutes.js";
 
+/** Built frontend (`frontend/dist`); same relative path from src/ and dist/. */
+const FRONTEND_DIST = path.resolve(
+  process.env.FRONTEND_DIST ?? path.join(import.meta.dirname, "../../frontend/dist"),
+);
+
 const app = express();
 
 app.disable("x-powered-by");
+// Behind one reverse proxy (e.g. Tailscale Serve) in production.
+app.set("trust proxy", 1);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -25,6 +34,25 @@ app.use("/api/activities", activityRouter);
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "not_found" });
 });
+
+// In production the API also serves the frontend, so everything is same-origin.
+// Tabs live in the URL hash, so no SPA fallback route is needed.
+if (existsSync(FRONTEND_DIST)) {
+  app.use(
+    express.static(FRONTEND_DIST, {
+      setHeaders(res, filePath) {
+        // Vite fingerprints files in assets/, so they can be cached forever;
+        // index.html must be revalidated to pick up new deploys.
+        res.setHeader(
+          "Cache-Control",
+          filePath.includes(`${path.sep}assets${path.sep}`)
+            ? "public, max-age=31536000, immutable"
+            : "no-cache",
+        );
+      },
+    }),
+  );
+}
 
 // Express 5 forwards rejected promises from async handlers here.
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
