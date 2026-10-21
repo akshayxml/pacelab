@@ -23,8 +23,10 @@ function contentSecurityPolicy(): Plugin {
           "default-src 'self'",
           `script-src 'self' ${scriptHashes.join(' ')}`,
           "style-src 'self' 'unsafe-inline'",
-          // Athlete avatars come from Intervals.icu / Strava CDNs.
-          "img-src 'self' data: https:",
+          // Athlete avatars from Intervals.icu / Strava's CDN only. A wildcard
+          // (https:) would let an injected script leak the key in an image URL.
+          // Avatars on other hosts fail to load and fall back to a status dot.
+          "img-src 'self' data: https://intervals.icu https://*.intervals.icu https://dgalywyr863hv.cloudfront.net",
           // Vite inlines very small font subsets as data: URLs.
           "font-src 'self' data:",
           "connect-src 'self' https://intervals.icu",

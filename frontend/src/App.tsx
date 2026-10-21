@@ -116,6 +116,8 @@ function App() {
 
   // API-key form (static build); shown on request while disconnected.
   const [showConnectForm, setShowConnectForm] = useState(false);
+  // Avatar URL that failed to load (e.g. a host the CSP doesn't allow).
+  const [failedAvatarUrl, setFailedAvatarUrl] = useState<string | null>(null);
   const connectWithKey = connection.connectWithKey;
   const handleConnectWithKey = useCallback(
     async (apiKey: string) => {
@@ -273,11 +275,14 @@ function App() {
         <div className="sidebar-bottom">
           <div className="nav-label">DATA SOURCE</div>
           <div className={`sync-status ${isConnected ? "connected" : ""}`}>
-            {isConnected && connection.athlete?.profileImageUrl ? (
+            {isConnected &&
+            connection.athlete?.profileImageUrl &&
+            connection.athlete.profileImageUrl !== failedAvatarUrl ? (
               <img
                 className="athlete-avatar"
                 src={connection.athlete.profileImageUrl}
                 alt=""
+                onError={(e) => setFailedAvatarUrl(e.currentTarget.getAttribute("src"))}
               />
             ) : (
               <span className="status-dot" />

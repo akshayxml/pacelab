@@ -111,8 +111,10 @@ data, so it's safe to publish. Strangers who open it only see demo data.
    (Chrome/Edge). On iOS, enter the key inside the installed app, since home-screen
    apps don't share storage with Safari.
 
-The key stays in that browser's local storage and is sent only to
-Intervals.icu (enforced by the page's Content-Security-Policy). **Disconnect**
+The key stays in that browser's local storage and the app sends it only to
+Intervals.icu. The page's Content-Security-Policy limits the hosts it can
+contact (Intervals.icu for data, plus avatar images), which makes it harder,
+though not impossible, for injected code to send the key elsewhere. **Disconnect**
 removes it and all cached runs from the device; you can also revoke the key
 in Intervals.icu at any time. Best efforts are analysed once per device and
 cached, so after the first run only new activities are fetched.

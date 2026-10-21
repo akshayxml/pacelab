@@ -82,7 +82,14 @@ export default function BestEfforts({ repository, onUnauthorized }: BestEffortsP
         .then((result) => {
           if (cancelled) return;
           setData(result);
-          if (result.progress.running) timer = setTimeout(load, POLL_MS);
+          const { running, rateLimitedUntil } = result.progress;
+          if (running) {
+            timer = setTimeout(load, POLL_MS);
+          } else if (rateLimitedUntil) {
+            // Check again once the pause is over; that request restarts the job.
+            const wait = Date.parse(rateLimitedUntil) - Date.now() + 1_000;
+            timer = setTimeout(load, Math.max(wait, POLL_MS));
+          }
         })
         .catch((err: unknown) => {
           if (cancelled) return;
