@@ -90,7 +90,14 @@ data, so it's safe to publish. Strangers who open it only see demo data.
 1. Push this repo to GitHub.
 2. **Settings → Pages → Build and deployment → Source: GitHub Actions**.
 3. Push to `main`. The [deploy workflow](.github/workflows/deploy-pages.yml)
-   publishes to `https://<user>.github.io/<repo>/`.
+   builds for the root of a custom domain (live at https://pacelab.akshayxml.com).
+4. **Settings → Pages → Custom domain**: enter your domain, with a DNS
+   `CNAME <subdomain> → <user>.github.io`, then tick **Enforce HTTPS**.
+
+> Use a dedicated (sub)domain: every `<user>.github.io/*` site shares one
+> origin, so their scripts could read the API key from local storage. To
+> serve from `https://<user>.github.io/<repo>/` instead, add
+> `-- --base=/<repo>/` to the build step.
 
 > GitHub Pages is free for public repos. For a private repo, use Cloudflare
 > Pages instead (free): build command
