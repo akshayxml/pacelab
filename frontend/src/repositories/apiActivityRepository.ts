@@ -8,7 +8,7 @@ import type {
 import type { ActivityRepository } from "./activityRepository";
 
 const RECENT_RUNS_LIMIT = 10;
-const WEEKLY_STATS_WEEKS = 8;
+const WEEKLY_STATS_WEEKS = 12;
 /** Matches the backend's history cache; a fresher fetch would be a cache hit anyway. */
 const HISTORY_TTL_MS = 30 * 60 * 1000;
 

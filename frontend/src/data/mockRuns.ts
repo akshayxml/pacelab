@@ -2,6 +2,10 @@
 import type { RunActivity, WeeklyStats } from "../types/activity";
 
 export const weeklyStats: WeeklyStats[] = [
+  { week: "Aug 3", distanceKm: 18, averagePaceMinutes: 5.61 },
+  { week: "Aug 10", distanceKm: 21, averagePaceMinutes: 5.55 },
+  { week: "Aug 17", distanceKm: 16, averagePaceMinutes: 5.52 },
+  { week: "Aug 24", distanceKm: 24, averagePaceMinutes: 5.47 },
   { week: "Aug 31", distanceKm: 22, averagePaceMinutes: 5.42 },
   { week: "Sep 7", distanceKm: 27, averagePaceMinutes: 5.36 },
   { week: "Sep 14", distanceKm: 31, averagePaceMinutes: 5.29 },

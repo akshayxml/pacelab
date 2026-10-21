@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import {
-  Bar,
-  BarChart,
+  Area,
+  AreaChart,
   CartesianGrid,
   ResponsiveContainer,
   Tooltip,
@@ -40,8 +40,8 @@ const PERIODS: {
     value: "week",
     label: "Weekly",
     title: "Weekly mileage",
-    subtitle: "Build consistency, one week at a time",
-    comparison: "vs last week",
+    subtitle: "Distance over the last 12 weeks",
+    comparison: "vs this time last week",
   },
   {
     value: "month",
@@ -54,7 +54,7 @@ const PERIODS: {
     value: "year",
     label: "Yearly",
     title: "Yearly mileage",
-    subtitle: "Distance for every year you've run",
+    subtitle: "Distance per year since you started (up to 12 years)",
     comparison: "vs this time last year",
   },
 ];
@@ -67,9 +67,9 @@ export default function MileageChart({ weekly, repository, onUnauthorized }: Mil
   const [period, setPeriod] = useState<MileagePeriod>("week");
   const config = PERIODS.find((p) => p.value === period) ?? PERIODS[0];
 
-  // Monthly and yearly views need the full run history; it loads on first use
-  // and is shared (cached) with the Yearly progress tab.
-  const { entries, error } = useRunHistory(repository, onUnauthorized, period !== "week");
+  // The full run history powers the monthly/yearly views and the "same point
+  // last period" comparisons; it's shared (cached) with the Yearly progress tab.
+  const { entries, error } = useRunHistory(repository, onUnauthorized);
 
   const bars: MileageBar[] | null = useMemo(() => {
     if (period === "week") return weeklyMileage(weekly);
@@ -78,12 +78,7 @@ export default function MileageChart({ weekly, repository, onUnauthorized }: Mil
   }, [period, weekly, entries]);
 
   const current = bars?.[bars.length - 1];
-  const previousKm =
-    period === "week"
-      ? bars?.[bars.length - 2]?.distanceKm
-      : entries
-        ? previousPeriodToDate(entries, period)
-        : undefined;
+  const previousKm = entries ? previousPeriodToDate(entries, period) : undefined;
   const change =
     current && previousKm
       ? Math.round(((current.distanceKm - previousKm) / previousKm) * 100)
@@ -132,13 +127,21 @@ export default function MileageChart({ weekly, repository, onUnauthorized }: Mil
           <p className="chart-message">Loading your run history...</p>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={bars} margin={{ top: 12, right: 4, left: -16, bottom: 0 }}>
+            <AreaChart data={bars} margin={{ top: 12, right: 8, left: -16, bottom: 0 }}>
+              <defs>
+                <linearGradient id="mileageFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="var(--chart-bar)" stopOpacity={0.25} />
+                  <stop offset="100%" stopColor="var(--chart-bar)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <CartesianGrid vertical={false} stroke="var(--chart-grid)" strokeDasharray="3 3" />
               <XAxis
                 dataKey="label"
                 tick={{ fontSize: 11, fill: "var(--chart-tick)" }}
                 axisLine={false}
                 tickLine={false}
+                interval="preserveStartEnd"
+                minTickGap={8}
                 dy={10}
               />
               <YAxis
@@ -147,7 +150,7 @@ export default function MileageChart({ weekly, repository, onUnauthorized }: Mil
                 tickLine={false}
               />
               <Tooltip
-                cursor={{ fill: "var(--chart-cursor)" }}
+                cursor={{ stroke: "var(--chart-bar)", strokeWidth: 1, strokeDasharray: "3 3" }}
                 labelFormatter={(label, payload) =>
                   (payload?.[0]?.payload as MileageBar | undefined)?.tooltipLabel ?? label
                 }
@@ -160,14 +163,17 @@ export default function MileageChart({ weekly, repository, onUnauthorized }: Mil
                   fontSize: 12,
                 }}
               />
-              <Bar
+              <Area
+                type="linear"
                 dataKey="distanceKm"
                 name="Distance"
-                fill="var(--chart-bar)"
-                radius={[5, 5, 0, 0]}
-                maxBarSize={32}
+                stroke="var(--chart-bar)"
+                strokeWidth={2}
+                fill="url(#mileageFill)"
+                dot={{ r: 3.5, fill: "var(--surface)", stroke: "var(--chart-bar)", strokeWidth: 2 }}
+                activeDot={{ r: 5, fill: "var(--chart-bar)", stroke: "var(--surface)", strokeWidth: 2 }}
               />
-            </BarChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>

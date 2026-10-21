@@ -28,7 +28,7 @@ import type {
 import type { ActivityRepository } from "./activityRepository";
 
 const RECENT_RUNS_LIMIT = 10;
-const WEEKLY_STATS_WEEKS = 8;
+const WEEKLY_STATS_WEEKS = 12;
 /** Reuse fetched activities for this long before asking Intervals.icu again. */
 const ACTIVITIES_TTL_MS = 5 * 60 * 1000;
 

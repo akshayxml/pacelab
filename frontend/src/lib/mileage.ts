@@ -68,8 +68,15 @@ export function monthlyMileage(
   return bars;
 }
 
-/** Every calendar year from the first run to the current year, oldest first. */
-export function yearlyMileage(entries: ActivityLogEntry[], now = new Date()): MileageBar[] {
+/**
+ * Calendar years from the first year with runs to the current one, capped at
+ * the last `years` years, oldest first.
+ */
+export function yearlyMileage(
+  entries: ActivityLogEntry[],
+  years = 12,
+  now = new Date(),
+): MileageBar[] {
   const currentYear = now.getFullYear();
   const totals = new Map<number, number>();
   let firstYear = currentYear;
@@ -80,7 +87,7 @@ export function yearlyMileage(entries: ActivityLogEntry[], now = new Date()): Mi
   }
 
   const bars: MileageBar[] = [];
-  for (let year = firstYear; year <= currentYear; year++) {
+  for (let year = Math.max(firstYear, currentYear - years + 1); year <= currentYear; year++) {
     bars.push({
       label: String(year),
       tooltipLabel: String(year) + (year === currentYear ? SO_FAR : ""),
@@ -91,15 +98,24 @@ export function yearlyMileage(entries: ActivityLogEntry[], now = new Date()): Mi
 }
 
 /**
- * Distance in the previous month or year up to the same day as today, so a
- * partly finished period is compared fairly ("vs this time last month").
+ * Distance in the previous week, month or year up to the same day as today,
+ * so a partly finished period is compared fairly ("vs this time last week").
+ * Weeks are Monday-based, matching the weekly stats.
  */
 export function previousPeriodToDate(
   entries: ActivityLogEntry[],
-  period: "month" | "year",
+  period: MileagePeriod,
   now = new Date(),
 ): number {
   const [y, m, d] = localIsoDate(now).split("-").map(Number);
+
+  if (period === "week") {
+    const iso = (date: Date) => date.toISOString().slice(0, 10);
+    const daysSinceMonday = (new Date(Date.UTC(y, m - 1, d)).getUTCDay() + 6) % 7;
+    const start = new Date(Date.UTC(y, m - 1, d - 7 - daysSinceMonday));
+    const end = new Date(Date.UTC(y, m - 1, d - 7));
+    return sumKm(entries, iso(start), iso(end));
+  }
 
   if (period === "year") {
     return sumKm(entries, `${y - 1}-01-01`, `${y - 1}-${pad(m)}-${pad(d)}`);
