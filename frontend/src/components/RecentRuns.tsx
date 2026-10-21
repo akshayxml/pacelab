@@ -45,6 +45,7 @@ export default function RecentRuns({ runs, repository, onUnauthorized }: RecentR
           <span>DISTANCE</span>
           <span>PACE</span>
           <span>AVG HR</span>
+          <span>ELEV GAIN</span>
         </div>
 
         {runs.map((run) => {
@@ -95,6 +96,9 @@ export default function RecentRuns({ runs, repository, onUnauthorized }: RecentR
                 </span>
                 <span className="run-number">
                   {run.averageHeartRate ?? "--"} <small>bpm</small>
+                </span>
+                <span className="run-number" title="Total elevation gain">
+                  {Math.round(run.elevationGainM)} <small>m</small>
                 </span>
               </div>
 

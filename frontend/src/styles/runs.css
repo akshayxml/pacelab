@@ -11,7 +11,7 @@
 
 .run-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1.8fr) minmax(60px, .8fr) minmax(65px, .8fr) minmax(65px, .8fr);
+  grid-template-columns: minmax(160px, 1.8fr) minmax(60px, .8fr) minmax(65px, .8fr) minmax(65px, .8fr) minmax(55px, .7fr);
   gap: 10px;
   align-items: center;
   padding: 13px 8px;
@@ -255,8 +255,8 @@
     gap: 6px;
   }
 
-  /* Drop the heart-rate column on small screens. */
-  .run-row> :last-child {
+  /* Drop the elevation and heart-rate columns on small screens. */
+  .run-row> :nth-child(n + 4) {
     display: none;
   }
 
