@@ -162,3 +162,7 @@ your tailnet. On a 1 GB VM, add swap first if the build runs out of memory.
 git pull && sudo docker compose up -d --build
 ```
 Computed best efforts persist in the `pacelab-data` volume across updates.
+
+## License
+
+[MIT](LICENSE)
