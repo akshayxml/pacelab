@@ -83,6 +83,8 @@ export interface ActivityLap {
   movingTimeS: number;
   /** null when recorded without a heart-rate monitor. */
   averageHeartRate: number | null;
-  /** null when the provider doesn't report it per lap. */
+  /** Metres climbed (never negative); null when the provider doesn't report it. */
   elevationGainM: number | null;
+  /** Net change, end minus start (negative when the lap goes downhill); null when unknown. */
+  elevationChangeM: number | null;
 }

@@ -199,5 +199,8 @@ function toLaps(intervals: IntervalsInterval[]): ActivityLap[] {
       movingTimeS: i.moving_time ?? i.elapsed_time ?? 0,
       averageHeartRate: i.average_heartrate ?? null,
       elevationGainM: i.total_elevation_gain ?? null,
+      // average_gradient is net climb / distance, so this is signed.
+      elevationChangeM:
+        i.average_gradient != null ? i.average_gradient * (i.distance ?? 0) : null,
     }));
 }

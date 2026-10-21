@@ -15,11 +15,13 @@ function mockLaps(activityId: string): ActivityLap[] {
   for (let start = 0, i = 0; start < distanceM; start += 1000, i++) {
     const lapM = Math.min(1000, distanceM - start);
     const paceS = 320 + Math.round(Math.sin(i * 1.7) * 12) - i; // ~5:20/km, slight negative split
+    const changeM = Math.round(Math.sin(i * 1.3) * 9 * (lapM / 1000)); // rolling hills
     laps.push({
       distanceM: lapM,
       movingTimeS: Math.round((paceS * lapM) / 1000),
       averageHeartRate: 145 + Math.min(i * 2, 20),
-      elevationGainM: Math.round(4 + Math.abs(Math.cos(i)) * 8),
+      elevationGainM: Math.max(changeM, 0) + Math.round(Math.abs(Math.cos(i)) * 3),
+      elevationChangeM: changeM,
     });
   }
   return laps;

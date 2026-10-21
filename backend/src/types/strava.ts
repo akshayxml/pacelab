@@ -54,4 +54,7 @@ export interface StravaLap {
   moving_time: number;
   average_heartrate?: number | null;
   total_elevation_gain?: number | null;
+  /** First and last sample of this lap in the activity streams. */
+  start_index: number;
+  end_index: number;
 }

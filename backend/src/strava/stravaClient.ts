@@ -189,14 +189,51 @@ export async function getDistanceStream(
   return { time, distance };
 }
 
-/** Laps for one activity. Costs one request against the rate limit. */
+/** Altitude samples for one activity, or null when it has none (e.g. treadmill). */
+async function getAltitudeStream(
+  accessToken: string,
+  activityId: string,
+): Promise<number[] | null> {
+  let streams: Partial<Record<"altitude", { data: number[] }>>;
+  try {
+    streams = await apiGet(
+      accessToken,
+      `/activities/${encodeURIComponent(activityId)}/streams`,
+      { keys: "altitude", key_by_type: "true" },
+    );
+  } catch (err) {
+    if (err instanceof StravaApiError && err.status === 404) return null;
+    throw err;
+  }
+  const altitude = streams.altitude?.data;
+  return altitude?.length ? altitude : null;
+}
+
+/** Mean altitude over a few samples around `index`, to damp sensor noise. */
+function altitudeAt(altitude: number[], index: number): number {
+  const from = Math.max(0, Math.min(index, altitude.length - 1) - 2);
+  const to = Math.min(altitude.length - 1, from + 4);
+  let sum = 0;
+  for (let i = from; i <= to; i++) sum += altitude[i];
+  return sum / (to - from + 1);
+}
+
+/**
+ * Laps for one activity. Strava laps only report elevation gain, so the net
+ * (signed) change comes from the altitude stream. Costs two requests
+ * against the rate limit.
+ */
 export async function getLaps(
   accessToken: string,
   activityId: string,
 ): Promise<ActivityLap[]> {
   let laps: StravaLap[];
+  let altitude: number[] | null;
   try {
-    laps = await apiGet(accessToken, `/activities/${encodeURIComponent(activityId)}/laps`);
+    [laps, altitude] = await Promise.all([
+      apiGet<StravaLap[]>(accessToken, `/activities/${encodeURIComponent(activityId)}/laps`),
+      getAltitudeStream(accessToken, activityId),
+    ]);
   } catch (err) {
     if (err instanceof StravaApiError && err.status === 404) return [];
     throw err;
@@ -208,5 +245,8 @@ export async function getLaps(
       movingTimeS: l.moving_time,
       averageHeartRate: l.average_heartrate ?? null,
       elevationGainM: l.total_elevation_gain ?? null,
+      elevationChangeM: altitude
+        ? altitudeAt(altitude, l.end_index) - altitudeAt(altitude, l.start_index)
+        : null,
     }));
 }

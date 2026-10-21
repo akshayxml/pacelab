@@ -46,4 +46,6 @@ export interface IntervalsInterval {
   elapsed_time?: number | null;
   average_heartrate?: number | null;
   total_elevation_gain?: number | null;
+  /** Net climb over distance as a fraction, e.g. -0.019 = -1.9% (downhill). */
+  average_gradient?: number | null;
 }

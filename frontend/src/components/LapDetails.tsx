@@ -25,6 +25,12 @@ function formatDuration(totalSeconds: number): string {
 
 const paceOf = (lap: ActivityLap) => lap.movingTimeS / (lap.distanceM / 1000);
 
+/** Signed metres, e.g. "+12 m", "-8 m", "0 m". */
+function formatElevationChange(meters: number): string {
+  const m = Math.round(meters);
+  return m > 0 ? `+${m} m` : `${m === 0 ? 0 : m} m`;
+}
+
 /** Per-lap breakdown, loaded when the row is expanded. */
 export default function LapDetails({ repository, activityId, onUnauthorized }: LapDetailsProps) {
   const [laps, setLaps] = useState<ActivityLap[] | null>(null);
@@ -63,7 +69,12 @@ export default function LapDetails({ repository, activityId, onUnauthorized }: L
   const fastest = paces.length > 1 ? Math.min(...paces) : null;
   const slowest = paces.length ? Math.max(...paces) : 0;
   const hasHr = laps.some((l) => l.averageHeartRate != null);
-  const hasElevation = laps.some((l) => l.elevationGainM != null);
+  // Prefer the signed net change; fall back to metres climbed (never negative).
+  const elevationMode = laps.some((l) => l.elevationChangeM != null)
+    ? "change"
+    : laps.some((l) => l.elevationGainM != null)
+      ? "gain"
+      : null;
 
   return (
     <div className="lap-details">
@@ -75,7 +86,16 @@ export default function LapDetails({ repository, activityId, onUnauthorized }: L
             <th scope="col">Time</th>
             <th scope="col" className="lap-pace-col">Pace</th>
             {hasHr && <th scope="col">Avg HR</th>}
-            {hasElevation && <th scope="col">Elev</th>}
+            {elevationMode === "change" && (
+              <th scope="col" title="Net elevation change over the lap (end minus start)">
+                Elev
+              </th>
+            )}
+            {elevationMode === "gain" && (
+              <th scope="col" title="Metres climbed during the lap">
+                Climb
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -85,7 +105,11 @@ export default function LapDetails({ repository, activityId, onUnauthorized }: L
             // Bar length: faster laps are longer (relative to the slowest lap).
             const barPct = slowest > 0 ? Math.max(15, Math.min(100, (slowest / pace) * 70)) : 0;
             return (
-              <tr key={i} className={isFastest ? "is-fastest" : undefined}>
+              <tr
+                key={i}
+                className={isFastest ? "is-fastest" : undefined}
+                title={isFastest ? "Fastest lap" : undefined}
+              >
                 <td className="lap-index">{i + 1}</td>
                 <td>{(lap.distanceM / 1000).toFixed(2)} km</td>
                 <td>{formatDuration(lap.movingTimeS)}</td>
@@ -101,7 +125,18 @@ export default function LapDetails({ repository, activityId, onUnauthorized }: L
                 {hasHr && (
                   <td>{lap.averageHeartRate != null ? `${Math.round(lap.averageHeartRate)} bpm` : "–"}</td>
                 )}
-                {hasElevation && (
+                {elevationMode === "change" && (
+                  <td
+                    title={
+                      lap.elevationGainM != null
+                        ? `Climbed ${Math.round(lap.elevationGainM)} m`
+                        : undefined
+                    }
+                  >
+                    {lap.elevationChangeM != null ? formatElevationChange(lap.elevationChangeM) : "–"}
+                  </td>
+                )}
+                {elevationMode === "gain" && (
                   <td>{lap.elevationGainM != null ? `${Math.round(lap.elevationGainM)} m` : "–"}</td>
                 )}
               </tr>
