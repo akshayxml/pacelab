@@ -10,8 +10,8 @@ import {
   LogOut,
   Menu,
   Moon,
+  Route,
   Sun,
-  TrendingUp,
   Trophy,
   X,
 } from "lucide-react";
@@ -20,7 +20,7 @@ import BestEfforts from "./components/BestEfforts";
 import ConnectIntervals from "./components/ConnectIntervals";
 import MetricCard from "./components/MetricCard";
 import MileageChart from "./components/MileageChart";
-import PaceChart from "./components/PaceChart";
+import TrainingLoadChart from "./components/TrainingLoadChart";
 import RecentRuns from "./components/RecentRuns";
 import YearlyProgress from "./components/YearlyProgress";
 
@@ -28,7 +28,11 @@ import { ApiError } from "./api/apiClient";
 import { STRAVA_LOGIN_URL } from "./api/authApi";
 import { STANDALONE } from "./config";
 import { useConnection } from "./hooks/useConnection";
+import { useRunHistory } from "./hooks/useRunHistory";
 import { useTheme } from "./hooks/useTheme";
+import { previousPeriodToDate } from "./lib/mileage";
+import { longestRuns, periodToDateKm } from "./lib/overviewMetrics";
+import { LOAD_ZONE_LABELS, loadZone, trainingLoad } from "./lib/trainingLoad";
 import { apiActivityRepository } from "./repositories/apiActivityRepository";
 import { intervalsActivityRepository } from "./repositories/intervalsActivityRepository";
 import { mockActivityRepository } from "./repositories/mockActivityRepository";
@@ -72,12 +76,6 @@ const TABS = {
 function tabFromHash(): Tab {
   const hash = window.location.hash.slice(1);
   return hash in TABS ? (hash as Tab) : "overview";
-}
-
-function formatPaceMinutes(minutes: number | null | undefined): string {
-  if (minutes == null) return "--";
-  const totalSeconds = Math.round(minutes * 60);
-  return `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
 }
 
 function App() {
@@ -207,31 +205,53 @@ function App() {
     };
   }, [repository, isCheckingConnection, markDisconnected, providerLabel]);
 
-  const currentWeek = weeklyStats[weeklyStats.length - 1];
-  const previousWeek = weeklyStats[weeklyStats.length - 2];
+  // Run history powers the overview cards (cached and shared with the charts).
+  const { entries: history } = useRunHistory(
+    repository,
+    handleHistoryUnauthorized,
+    !isCheckingConnection,
+  );
 
-  const weeklyChange =
-    currentWeek && previousWeek && previousWeek.distanceKm !== 0
-      ? ((currentWeek.distanceKm - previousWeek.distanceKm) /
-          previousWeek.distanceKm) *
-      100
-      : null;
+  const overview = useMemo(() => {
+    if (!history) return null;
+    return {
+      monthKm: periodToDateKm(history, "month"),
+      previousMonthKm: previousPeriodToDate(history, "month"),
+      yearKm: periodToDateKm(history, "year"),
+      previousYearKm: previousPeriodToDate(history, "year"),
+      longest: longestRuns(history, 28),
+      ratio: trainingLoad(history, 1)[0]?.ratio ?? null,
+    };
+  }, [history]);
 
-  // Only average runs that were recorded with a heart-rate monitor.
-  const heartRates = recentRuns
-    .map((run) => run.averageHeartRate)
-    .filter((hr): hr is number => hr !== null);
-  const averageHeartRate =
-    heartRates.length > 0
-      ? Math.round(
-        heartRates.reduce((total, hr) => total + hr, 0) / heartRates.length,
-      )
-      : null;
+  const percentLabel = (current: number, previous: number, suffix: string) => {
+    const pct = ((current - previous) / previous) * 100;
+    return `${pct > 0 ? "+" : ""}${pct.toFixed(1)}% ${suffix}`;
+  };
 
-  const weeklyChangeLabel =
-    weeklyChange === null
-      ? "Weekly overview"
-      : `${weeklyChange > 0 ? "+" : ""}${weeklyChange.toFixed(1)}% vs last week`;
+  const monthChangeLabel = !overview
+    ? "Loading..."
+    : overview.previousMonthKm > 0
+      ? percentLabel(overview.monthKm, overview.previousMonthKm, "vs this time last month")
+      : "This month so far";
+
+  const yearChangeLabel = !overview
+    ? "Loading..."
+    : overview.previousYearKm > 0
+      ? percentLabel(overview.yearKm, overview.previousYearKm, "vs this time last year")
+      : "This year so far";
+
+  const longestRunLabel = !overview
+    ? "Loading..."
+    : overview.longest.previousKm > 0
+      ? `Last 4 weeks · was ${overview.longest.previousKm.toFixed(1)} km the 4 weeks prior`
+      : "Last 4 weeks";
+
+  const loadLabel = !overview
+    ? "Loading..."
+    : overview.ratio != null
+      ? LOAD_ZONE_LABELS[loadZone(overview.ratio)]
+      : "Not enough recent runs";
 
   const disconnectedMessage = STANDALONE
     ? "You're viewing sample running data. Connect Intervals.icu to see your own runs."
@@ -436,38 +456,39 @@ function App() {
           <div className="tab-panel" key="overview">
             <section className="metrics-grid">
               <MetricCard
-                label="Weekly Distance"
-                value={currentWeek?.distanceKm.toFixed(1) ?? "--"}
+                label="Monthly Distance"
+                value={overview ? overview.monthKm.toFixed(1) : "--"}
                 unit="km"
-                change={weeklyChangeLabel}
-                icon={Footprints}
+                change={monthChangeLabel}
+                icon={CalendarDays}
               />
 
               <MetricCard
-                label="Average Pace"
-                value={formatPaceMinutes(currentWeek?.averagePaceMinutes)}
-                unit="/km"
-                change="Weekly average"
+                label="Yearly Distance"
+                value={
+                  overview
+                    ? Math.round(overview.yearKm).toLocaleString("en-US")
+                    : "--"
+                }
+                unit="km"
+                change={yearChangeLabel}
+                icon={ChartLine}
+              />
+
+              <MetricCard
+                label="Longest Run"
+                value={overview ? overview.longest.currentKm.toFixed(1) : "--"}
+                unit="km"
+                change={longestRunLabel}
+                icon={Route}
+              />
+
+              <MetricCard
+                label="Training Load"
+                value={overview?.ratio != null ? overview.ratio.toFixed(2) : "--"}
+                unit="ratio"
+                change={loadLabel}
                 icon={Gauge}
-              />
-
-              <MetricCard
-                label="Recent Runs"
-                value={String(recentRuns.length)}
-                unit="runs"
-                change={`${recentRuns.reduce(
-                  (sum, run) => sum + run.distanceKm,
-                  0,
-                ).toFixed(1)} km total`}
-                icon={Activity}
-              />
-
-              <MetricCard
-                label="Avg. Heart Rate"
-                value={averageHeartRate?.toString() ?? "--"}
-                unit="bpm"
-                change="Across recent runs"
-                icon={TrendingUp}
               />
             </section>
 
@@ -477,7 +498,10 @@ function App() {
                 repository={repository}
                 onUnauthorized={handleHistoryUnauthorized}
               />
-              <PaceChart data={weeklyStats} />
+              <TrainingLoadChart
+                repository={repository}
+                onUnauthorized={handleHistoryUnauthorized}
+              />
             </section>
           </div>
         )}

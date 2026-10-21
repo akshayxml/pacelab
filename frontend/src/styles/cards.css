@@ -176,6 +176,50 @@
   font-family: 'DM Sans Variable', sans-serif;
 }
 
+/* Training load legend, zone label + tooltip. */
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+  margin: 0 5px 2px 0;
+  vertical-align: middle;
+}
+
+.legend-swatch:not(:first-child) {
+  margin-left: 12px;
+}
+
+.chart-container.load-distance {
+  height: 150px;
+}
+
+.chart-container.load-ratio {
+  height: 130px;
+  margin-top: 4px;
+}
+
+.load-zone {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.load-tooltip {
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.load-tooltip em {
+  font-style: normal;
+  font-weight: 600;
+}
+
 /* Loading / error text shown in place of a chart. */
 .chart-message {
   display: grid;
