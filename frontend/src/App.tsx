@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   CalendarDays,
@@ -8,6 +8,7 @@ import {
   Gauge,
   LayoutDashboard,
   LogOut,
+  Menu,
   Moon,
   Sun,
   TrendingUp,
@@ -91,10 +92,36 @@ function App() {
   }, [page.label]);
 
   useEffect(() => {
-    const onHashChange = () => setActiveTab(tabFromHash());
+    const onHashChange = () => {
+      setActiveTab(tabFromHash());
+      setNavOpen(false);
+    };
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
   }, []);
+
+  // Phone layout: the sidebar is a drawer opened from a menu button.
+  const [navOpen, setNavOpen] = useState(false);
+  const navToggleRef = useRef<HTMLButtonElement>(null);
+  const navCloseRef = useRef<HTMLButtonElement>(null);
+  const closeNav = useCallback(() => {
+    setNavOpen(false);
+    navToggleRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    navCloseRef.current?.focus();
+    document.body.classList.add("nav-open");
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeNav();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.classList.remove("nav-open");
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [navOpen, closeNav]);
   const { isConnected, markDisconnected } = connection;
   const providerLabel = connection.providerLabel ?? "your data source";
   const isCheckingConnection = connection.state === "checking";
@@ -222,7 +249,10 @@ function App() {
       <button
         type="button"
         className={`button-primary connect-cta ${className}`}
-        onClick={() => setShowConnectForm(true)}
+        onClick={() => {
+          setShowConnectForm(true);
+          setNavOpen(false);
+        }}
       >
         Connect Intervals.icu
       </button>
@@ -242,7 +272,21 @@ function App() {
 
   return (
     <main className="app-shell">
-      <aside className="sidebar">
+      <button
+        ref={navToggleRef}
+        type="button"
+        id="nav-toggle"
+        className="nav-toggle"
+        aria-label="Open menu"
+        aria-expanded={navOpen}
+        aria-controls="sidebar"
+        onClick={() => setNavOpen(true)}
+      >
+        <Menu size={20} />
+      </button>
+      {navOpen && <div className="sidebar-backdrop" aria-hidden onClick={closeNav} />}
+
+      <aside id="sidebar" className={`sidebar ${navOpen ? "open" : ""}`}>
         <div className="brand">
           <div className="brand-icon">
             <Activity size={22} />
@@ -250,6 +294,15 @@ function App() {
           <span>
             Pace<span className="brand-accent">Lab</span>
           </span>
+          <button
+            ref={navCloseRef}
+            type="button"
+            className="sidebar-close"
+            aria-label="Close menu"
+            onClick={closeNav}
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <div className="nav-label">WORKSPACE</div>
@@ -264,6 +317,8 @@ function App() {
                 className={`nav-item ${activeTab === tab ? "active" : ""}`}
                 href={`#${tab}`}
                 aria-current={activeTab === tab ? "page" : undefined}
+                // The current tab doesn't fire hashchange, so close here too.
+                onClick={() => setNavOpen(false)}
               >
                 <Icon size={18} />
                 <span>{label}</span>

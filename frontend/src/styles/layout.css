@@ -100,13 +100,16 @@
 
 @media (max-width: 760px) {
   .main-content {
-    margin-left: 64px;
-    padding: 25px 16px;
+    margin-left: 0;
+    padding: 18px 14px 25px;
   }
 
   .topbar {
     align-items: flex-start;
     flex-direction: column;
+    /* Clear the floating menu button (top-left). */
+    padding-left: 50px;
+    min-height: 44px;
   }
 
   .date-pill {
