@@ -45,3 +45,13 @@ export interface StravaSummaryActivity {
   average_heartrate?: number;
   max_heartrate?: number;
 }
+
+/** Subset of a Strava lap (GET /activities/{id}/laps). */
+export interface StravaLap {
+  /** Meters. */
+  distance: number;
+  /** Seconds. */
+  moving_time: number;
+  average_heartrate?: number | null;
+  total_elevation_gain?: number | null;
+}

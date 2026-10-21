@@ -4,7 +4,7 @@ import { getAuth, requireStravaSession } from "../auth/requireStravaSession.js";
 import * as intervals from "../intervals/intervalsClient.js";
 import * as strava from "../strava/stravaClient.js";
 import type { DataProvider } from "../config.js";
-import type { DistanceStream, SourceActivity } from "../types/activity.js";
+import type { ActivityLap, DistanceStream, SourceActivity } from "../types/activity.js";
 
 const RECENT_WINDOW_DAYS = 90;
 /** Full-history cap for Strava: 25 pages x 200 = 5,000 activities. */
@@ -23,6 +23,8 @@ export interface ActivitySource {
   listAll(): Promise<SourceActivity[]>;
   /** Time + distance samples for one activity (null if it has no GPS/distance). */
   getDistanceStream(activityId: string): Promise<DistanceStream | null>;
+  /** Laps for one activity (empty when the provider has none). */
+  getLaps(activityId: string): Promise<ActivityLap[]>;
 }
 
 function stravaSource(sessionId: string, accessToken: string): ActivitySource {
@@ -36,6 +38,7 @@ function stravaSource(sessionId: string, accessToken: string): ActivitySource {
         maxPages: STRAVA_HISTORY_MAX_PAGES,
       }),
     getDistanceStream: (id) => strava.getDistanceStream(accessToken, id),
+    getLaps: (id) => strava.getLaps(accessToken, id),
   };
 }
 
@@ -49,6 +52,7 @@ const intervalsSource: ActivitySource = {
   listSince: (after) => intervals.listActivities(after),
   listAll: () => intervals.listActivities(0),
   getDistanceStream: (id) => intervals.getDistanceStream(id),
+  getLaps: (id) => intervals.getLaps(id),
 };
 
 export function getActivitySource(res: Response): ActivitySource {

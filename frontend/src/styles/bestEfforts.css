@@ -173,6 +173,91 @@
   opacity: 1;
 }
 
+/* ---------- Expandable lap rows ---------- */
+
+.best-row {
+  cursor: pointer;
+}
+
+.best-table tbody tr.best-row.is-open {
+  background: var(--surface-2);
+}
+
+.name-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.lap-toggle {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  margin-left: -6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.lap-toggle:hover,
+.lap-toggle:focus-visible {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.lap-toggle svg {
+  transition: transform .2s ease;
+}
+
+.lap-toggle[aria-expanded="true"] svg {
+  transform: rotate(90deg);
+}
+
+.best-table tbody tr.lap-row,
+.best-table tbody tr.lap-row:hover {
+  background: var(--surface-2);
+  cursor: default;
+}
+
+.best-table tr.lap-row > td {
+  padding-top: 2px;
+  padding-bottom: 14px;
+  white-space: normal;
+}
+
+/* Keep the lap card in view while the wide table scrolls horizontally. */
+.lap-row .lap-details {
+  position: sticky;
+  left: 22px;
+  max-width: 720px;
+}
+
+/* The lap table is nested in .best-table; undo its cell rules. */
+.best-table .lap-table th,
+.best-table .lap-table td {
+  padding: 7px 12px;
+  border-bottom: 0;
+}
+
+.best-table .lap-table thead th {
+  position: static;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background: transparent;
+  font-size: 9px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.best-table .lap-table tbody tr:hover {
+  background: transparent;
+}
+
 .rank-col {
   width: 1%;
   color: var(--text-faint);

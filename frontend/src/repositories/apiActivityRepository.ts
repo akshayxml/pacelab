@@ -1,5 +1,6 @@
 import { apiClient } from "../api/apiClient";
 import type {
+  ActivityLap,
   ActivityLogEntry,
   BestEffortsResponse,
   RunActivity,
@@ -23,6 +24,8 @@ let historyCache: HistoryCacheEntry | null = null;
 
 /** Only complete results are kept; partial ones are still being analysed. */
 let bestEffortsCache: { data: BestEffortsResponse; fetchedAt: number } | null = null;
+/** Laps of a finished activity never change; cache them for the session. */
+const lapsCache = new Map<string, Promise<ActivityLap[]>>();
 
 function isFresh(cache: HistoryCacheEntry | null): cache is HistoryCacheEntry {
   return cache !== null && Date.now() - cache.fetchedAt < HISTORY_TTL_MS;
@@ -35,6 +38,7 @@ function isFresh(cache: HistoryCacheEntry | null): cache is HistoryCacheEntry {
 export function clearActivityCache(): void {
   historyCache = null;
   bestEffortsCache = null;
+  lapsCache.clear();
 }
 
 export const apiActivityRepository: ActivityRepository = {
@@ -95,5 +99,18 @@ export const apiActivityRepository: ActivityRepository = {
       Date.now() - bestEffortsCache.fetchedAt < HISTORY_TTL_MS
       ? bestEffortsCache.data
       : undefined;
+  },
+
+  getLaps(activityId) {
+    let laps = lapsCache.get(activityId);
+    if (!laps) {
+      laps = apiClient.get<ActivityLap[]>(
+        `/api/activities/${encodeURIComponent(activityId)}/laps`,
+      );
+      lapsCache.set(activityId, laps);
+      // Don't cache failures: reopening should retry.
+      laps.catch(() => lapsCache.delete(activityId));
+    }
+    return laps;
   },
 };

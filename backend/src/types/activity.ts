@@ -16,6 +16,8 @@ export interface RunActivity {
   averageHeartRate: number | null;
   type: RunType;
   elevationGainM: number;
+  /** Where the run can be opened in its original app (absent for sample data). */
+  link?: ActivityLink;
 }
 
 export interface WeeklyStats {
@@ -113,4 +115,14 @@ export interface SourceActivity {
   isWorkout: boolean;
   /** Link to the activity in the app it was recorded/synced from. */
   link: ActivityLink;
+}
+
+/** One lap (or device/auto-detected interval) of an activity. */
+export interface ActivityLap {
+  distanceM: number;
+  movingTimeS: number;
+  /** null when recorded without a heart-rate monitor. */
+  averageHeartRate: number | null;
+  /** null when the provider doesn't report it per lap. */
+  elevationGainM: number | null;
 }

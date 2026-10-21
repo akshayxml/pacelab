@@ -10,7 +10,7 @@ import {
   resetBestEffortJob,
 } from "../intervals/bestEffortJob";
 import { BEST_EFFORT_DISTANCES, MIN_BEST_EFFORT_METERS } from "../intervals/bestEfforts";
-import { listActivities } from "../intervals/client";
+import { getLaps as fetchLaps, listActivities } from "../intervals/client";
 import {
   aggregateWeeklyStats,
   isRun,
@@ -21,6 +21,7 @@ import {
 import { activityCacheStore, apiKeyStore } from "../intervals/storage";
 import type { SourceActivity } from "../intervals/types";
 import type {
+  ActivityLap,
   ActivityLogEntry,
   BestEffortActivity,
   BestEffortsResponse,
@@ -38,6 +39,8 @@ let inflight: Promise<SourceActivity[]> | null = null;
 let generation = 0;
 let bestEffortsCache: BestEffortsResponse | null = null;
 const historyByActivities = new WeakMap<SourceActivity[], ActivityLogEntry[]>();
+/** Laps of a finished activity never change; cache them for the session. */
+const lapsCache = new Map<string, Promise<ActivityLap[]>>();
 
 function requireApiKey(): string {
   const key = apiKeyStore.get();
@@ -95,6 +98,7 @@ export function resetIntervalsRepository(): void {
   memory = null;
   inflight = null;
   bestEffortsCache = null;
+  lapsCache.clear();
   resetBestEffortJob();
 }
 
@@ -172,5 +176,17 @@ export const intervalsActivityRepository: ActivityRepository = {
 
   peekBestEfforts() {
     return bestEffortsCache && isFresh() ? bestEffortsCache : undefined;
+  },
+
+  getLaps(activityId) {
+    let laps = lapsCache.get(activityId);
+    if (!laps) {
+      // Defer so a missing API key rejects the promise instead of throwing.
+      laps = Promise.resolve().then(() => fetchLaps(requireApiKey(), activityId));
+      lapsCache.set(activityId, laps);
+      // Don't cache failures: reopening should retry.
+      laps.catch(() => lapsCache.delete(activityId));
+    }
+    return laps;
   },
 };

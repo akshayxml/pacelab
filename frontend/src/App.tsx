@@ -508,7 +508,11 @@ function App() {
 
         {!loadingDashboard && !dashboardError && activeTab === "activities" && (
           <div className="tab-panel" key="activities">
-            <RecentRuns runs={recentRuns} />
+            <RecentRuns
+              runs={recentRuns}
+              repository={repository}
+              onUnauthorized={handleHistoryUnauthorized}
+            />
           </div>
         )}
 

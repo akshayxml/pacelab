@@ -1,6 +1,7 @@
 import { intervalsConfig } from "../config.js";
 import { UpstreamApiError } from "../errors.js";
 import type {
+  ActivityLap,
   ActivityLink,
   Athlete,
   DistanceStream,
@@ -9,6 +10,7 @@ import type {
 import type {
   IntervalsActivity,
   IntervalsAthlete,
+  IntervalsInterval,
 } from "../types/intervals.js";
 
 const INTERVALS_API_URL = "https://intervals.icu/api/v1";
@@ -168,4 +170,34 @@ export async function getDistanceStream(
     time: time.map((v) => v ?? 0),
     distance: distance.map((v) => v ?? 0),
   };
+}
+
+/**
+ * Laps for one activity. Intervals.icu reports them as `icu_intervals`
+ * (device laps, or auto-detected intervals when the athlete re-analysed).
+ */
+export async function getLaps(activityId: string): Promise<ActivityLap[]> {
+  let activity: { icu_intervals?: IntervalsInterval[] | null };
+  try {
+    activity = await apiGet(`/activity/${encodeURIComponent(activityId)}`, {
+      intervals: "true",
+    });
+  } catch (err) {
+    if (err instanceof IntervalsApiError && (err.status === 404 || err.status === 422)) {
+      return [];
+    }
+    throw err;
+  }
+  return toLaps(activity.icu_intervals ?? []);
+}
+
+function toLaps(intervals: IntervalsInterval[]): ActivityLap[] {
+  return intervals
+    .filter((i) => (i.distance ?? 0) > 0 && (i.moving_time ?? i.elapsed_time ?? 0) > 0)
+    .map((i) => ({
+      distanceM: i.distance ?? 0,
+      movingTimeS: i.moving_time ?? i.elapsed_time ?? 0,
+      averageHeartRate: i.average_heartrate ?? null,
+      elevationGainM: i.total_elevation_gain ?? null,
+    }));
 }

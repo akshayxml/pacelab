@@ -27,6 +27,7 @@ export const recentRuns: RunActivity[] = [
     averageHeartRate: 142,
     type: "Easy",
     elevationGainM: 38,
+    link: { url: "https://www.strava.com/", label: "Strava" },
   },
   {
     id: "run-2",
@@ -38,6 +39,7 @@ export const recentRuns: RunActivity[] = [
     averageHeartRate: 165,
     type: "Tempo",
     elevationGainM: 52,
+    link: { url: "https://www.strava.com/", label: "Strava" },
   },
   {
     id: "run-3",
@@ -49,6 +51,7 @@ export const recentRuns: RunActivity[] = [
     averageHeartRate: 148,
     type: "Long",
     elevationGainM: 74,
+    link: { url: "https://www.strava.com/", label: "Strava" },
   },
   {
     id: "run-4",
@@ -60,5 +63,6 @@ export const recentRuns: RunActivity[] = [
     averageHeartRate: 136,
     type: "Easy",
     elevationGainM: 21,
+    link: { url: "https://www.strava.com/", label: "Strava" },
   },
 ];

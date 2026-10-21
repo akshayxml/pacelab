@@ -72,6 +72,7 @@ export function toRunActivity(activity: SourceActivity): RunActivity {
         : null,
     type: classifyRun(activity, distanceKm),
     elevationGainM: Math.round(activity.elevationGainM),
+    link: activity.link,
   };
 }
 

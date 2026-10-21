@@ -13,6 +13,8 @@ export interface RunActivity {
   averageHeartRate: number | null;
   type: RunType;
   elevationGainM: number;
+  /** Where the run can be opened in its original app (absent for sample data). */
+  link?: ActivityLink;
 }
 
 export interface WeeklyStats {
@@ -73,4 +75,14 @@ export interface BestEffortsResponse {
     /** ISO time when analysis resumes after an upstream rate limit. */
     rateLimitedUntil: string | null;
   };
+}
+
+/** One lap (or device/auto-detected interval) of an activity. */
+export interface ActivityLap {
+  distanceM: number;
+  movingTimeS: number;
+  /** null when recorded without a heart-rate monitor. */
+  averageHeartRate: number | null;
+  /** null when the provider doesn't report it per lap. */
+  elevationGainM: number | null;
 }

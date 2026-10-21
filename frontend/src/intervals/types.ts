@@ -66,3 +66,14 @@ export interface DistanceStream {
   /** Cumulative meters, same length as `time`. */
   distance: number[];
 }
+
+/** Subset of one entry in `icu_intervals` (GET /activity/{id}?intervals=true). */
+export interface IntervalsInterval {
+  /** Meters. */
+  distance?: number | null;
+  /** Seconds. */
+  moving_time?: number | null;
+  elapsed_time?: number | null;
+  average_heartrate?: number | null;
+  total_elevation_gain?: number | null;
+}

@@ -71,6 +71,7 @@ export function toRunActivity(activity: SourceActivity): RunActivity {
       activity.averageHeartRate != null ? Math.round(activity.averageHeartRate) : null,
     type: classifyRun(activity, distanceKm),
     elevationGainM: Math.round(activity.elevationGainM),
+    link: activity.link,
   };
 }
 

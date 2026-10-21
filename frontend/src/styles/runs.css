@@ -16,18 +16,156 @@
   align-items: center;
   padding: 13px 8px;
   margin: 0 -8px;
-  border-bottom: 1px solid var(--border-soft);
   border-radius: 8px;
   font-size: 12px;
   transition: background .15s ease;
 }
 
-.run-row:not(.run-header):hover {
+.run-header {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.run-item {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.run-item:last-child {
+  border-bottom: 0;
+}
+
+.run-row:not(.run-header):hover,
+.run-item.is-open .run-row {
   background: var(--surface-2);
 }
 
-.run-row:last-child {
-  border-bottom: 0;
+/* Row that expands to show laps. */
+.run-toggle {
+  cursor: pointer;
+}
+
+.run-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.run-name-text {
+  min-width: 0;
+  flex: 1;
+}
+
+.run-chevron {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform .2s ease;
+}
+
+.run-item.is-open .run-chevron {
+  transform: rotate(180deg);
+}
+
+.run-external {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: -1px;
+  color: var(--text-muted);
+}
+
+.run-external:hover,
+.run-external:focus-visible {
+  color: var(--accent-text);
+}
+
+.run-laps {
+  padding: 4px 0 14px;
+}
+
+/* ---------- Lap card (shared with Best efforts) ---------- */
+
+.lap-details {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow-x: auto;
+}
+
+.lap-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  text-align: left;
+}
+
+.lap-table th {
+  padding: 8px 12px;
+  color: var(--text-faint);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .7px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border-soft);
+  white-space: nowrap;
+}
+
+.lap-table td {
+  padding: 7px 12px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.lap-table tbody tr + tr td {
+  border-top: 1px solid var(--border-soft);
+}
+
+.lap-index {
+  color: var(--text-muted);
+  width: 36px;
+}
+
+.lap-pace-col {
+  width: 40%;
+}
+
+.lap-pace {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 120px;
+}
+
+.lap-pace-bar {
+  position: absolute;
+  inset: 2px auto 2px 0;
+  border-radius: 4px;
+  background: var(--accent-soft);
+}
+
+.lap-pace-value {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding-left: 6px;
+  font-weight: 600;
+}
+
+.lap-table tr.is-fastest .lap-pace-bar {
+  background: var(--accent);
+  opacity: .35;
+}
+
+.lap-table tr.is-fastest .lap-pace-value {
+  color: var(--accent-text);
+}
+
+.lap-message {
+  margin: 0;
+  padding: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.lap-message.error {
+  color: var(--negative);
 }
 
 .run-header {

@@ -1,4 +1,5 @@
 import type {
+  ActivityLap,
   ActivityLogEntry,
   BestEffortsResponse,
   RunActivity,
@@ -16,4 +17,6 @@ export interface ActivityRepository {
   getBestEfforts(): Promise<BestEffortsResponse>;
   /** Last complete best-efforts result, if any. */
   peekBestEfforts(): BestEffortsResponse | undefined;
+  /** Laps for one activity (empty when it has none). */
+  getLaps(activityId: string): Promise<ActivityLap[]>;
 }

@@ -1,8 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, ExternalLink, Trophy } from "lucide-react";
+import { Fragment, useEffect, useMemo, useState } from "react";
+import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
+  ChevronRight,
+  ExternalLink,
+  Trophy,
+} from "lucide-react";
 import { ApiError } from "../api/apiClient";
 import type { ActivityRepository } from "../repositories/activityRepository";
 import type { BestEffortActivity, BestEffortsResponse } from "../types/activity";
+import LapDetails from "./LapDetails";
 
 interface BestEffortsProps {
   repository: ActivityRepository;
@@ -68,6 +76,16 @@ export default function BestEfforts({ repository, onUnauthorized }: BestEffortsP
   const [error, setError] = useState<string | null>(null);
   const [sort, setSort] = useState<SortState>({ key: "date", dir: "desc" });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  // Runs whose lap card is open.
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+
+  const toggle = (id: string) =>
+    setExpanded((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   // Fetch, then keep polling while the backend is still analysing.
   useEffect(() => {
@@ -164,6 +182,8 @@ export default function BestEfforts({ repository, onUnauthorized }: BestEffortsP
   const { analysed, total, running, rateLimitedUntil } = data.progress;
   const percent = total > 0 ? Math.round((analysed / total) * 100) : 100;
   const rankedByTime = sort.key !== "date" && sort.key !== "distance" && sort.dir === "asc";
+  // Rank (optional) + run + date + distance + one per effort column.
+  const columnCount = (rankedByTime ? 1 : 0) + 3 + columns.length;
 
   const sortHeader = (key: SortKey, label: string, className = "") => {
     const active = sort.key === key;
@@ -210,7 +230,7 @@ export default function BestEfforts({ repository, onUnauthorized }: BestEffortsP
           <div>
             <h2 id="best-efforts-title">Fastest efforts by distance</h2>
             <p>
-              Best time for each distance within a run. Click a column to sort.
+              Best time for each distance within a run. Click a column to sort, or a run for laps.
             </p>
           </div>
           <span className="panel-chip">
@@ -236,25 +256,43 @@ export default function BestEfforts({ repository, onUnauthorized }: BestEffortsP
                   </tr>
                 </thead>
                 <tbody>
-                  {sorted.slice(0, visibleCount).map((a, index) => (
-                    <tr key={a.id}>
+                  {sorted.slice(0, visibleCount).map((a, index) => {
+                    const isOpen = expanded.has(a.id);
+                    return (
+                    <Fragment key={a.id}>
+                    <tr
+                      className={`best-row ${isOpen ? "is-open" : ""}`}
+                      onClick={() => toggle(a.id)}
+                    >
                       {rankedByTime && (
                         <td className="rank-col">
                           {a.efforts[sort.key] != null ? index + 1 : ""}
                         </td>
                       )}
                       <th scope="row" className="name-col">
-                        <a
-                          className="activity-link"
-                          href={a.link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title={`${a.name}: open in ${a.link.label}`}
-                        >
-                          <span className="activity-link-text">{a.name}</span>
-                          <ExternalLink size={12} aria-hidden />
-                          <span className="visually-hidden"> (opens {a.link.label} in a new tab)</span>
-                        </a>
+                        <span className="name-cell">
+                          <button
+                            type="button"
+                            className="lap-toggle"
+                            aria-expanded={isOpen}
+                            aria-controls={`best-laps-${a.id}`}
+                            aria-label={`${isOpen ? "Hide" : "Show"} laps for ${a.name}`}
+                          >
+                            <ChevronRight size={14} aria-hidden />
+                          </button>
+                          <a
+                            className="activity-link"
+                            href={a.link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`${a.name}: open in ${a.link.label}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <span className="activity-link-text">{a.name}</span>
+                            <ExternalLink size={12} aria-hidden />
+                            <span className="visually-hidden"> (opens {a.link.label} in a new tab)</span>
+                          </a>
+                        </span>
                       </th>
                       <td className="muted-cell">{dateFormatter.format(new Date(a.date))}</td>
                       <td className="muted-cell">{formatKm(a.distanceM)}</td>
@@ -282,7 +320,20 @@ export default function BestEfforts({ repository, onUnauthorized }: BestEffortsP
                         );
                       })}
                     </tr>
-                  ))}
+                    {isOpen && (
+                      <tr className="lap-row" id={`best-laps-${a.id}`}>
+                        <td colSpan={columnCount}>
+                          <LapDetails
+                            repository={repository}
+                            activityId={a.id}
+                            onUnauthorized={onUnauthorized}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -1,7 +1,8 @@
 import { stravaConfig } from "../config.js";
 import { UpstreamApiError } from "../errors.js";
-import type { DistanceStream, SourceActivity } from "../types/activity.js";
+import type { ActivityLap, DistanceStream, SourceActivity } from "../types/activity.js";
 import type {
+  StravaLap,
   StravaSummaryActivity,
   StravaTokenResponse,
 } from "../types/strava.js";
@@ -186,4 +187,26 @@ export async function getDistanceStream(
   const distance = streams.distance?.data;
   if (!time?.length || !distance?.length) return null;
   return { time, distance };
+}
+
+/** Laps for one activity. Costs one request against the rate limit. */
+export async function getLaps(
+  accessToken: string,
+  activityId: string,
+): Promise<ActivityLap[]> {
+  let laps: StravaLap[];
+  try {
+    laps = await apiGet(accessToken, `/activities/${encodeURIComponent(activityId)}/laps`);
+  } catch (err) {
+    if (err instanceof StravaApiError && err.status === 404) return [];
+    throw err;
+  }
+  return laps
+    .filter((l) => l.distance > 0 && l.moving_time > 0)
+    .map((l) => ({
+      distanceM: l.distance,
+      movingTimeS: l.moving_time,
+      averageHeartRate: l.average_heartrate ?? null,
+      elevationGainM: l.total_elevation_gain ?? null,
+    }));
 }

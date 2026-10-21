@@ -19,12 +19,14 @@ import {
 } from "../bestEfforts/bestEffortJob.js";
 import { bestEffortStore } from "../bestEfforts/bestEffortStore.js";
 import type {
+  ActivityLap,
   BestEffortActivity,
   BestEffortsResponse,
 } from "../types/activity.js";
 import {
   getActivitySource,
   resolveActivitySource,
+  type ActivitySource,
 } from "../activities/activitySource.js";
 
 export const activityRouter = Router();
@@ -151,4 +153,54 @@ activityRouter.get("/best-efforts", async (_req, res) => {
         : null,
     },
   } satisfies BestEffortsResponse);
+});
+
+/** Laps of a finished activity don't change; keep a bounded in-memory cache. */
+const LAPS_CACHE_MAX = 500;
+const lapsCache = new Map<string, ActivityLap[]>();
+
+/**
+ * True if `id` is one of the athlete's runs. Uses the same cached lists as
+ * the dashboard, so it rarely costs an upstream request.
+ */
+async function isOwnRun(source: ActivitySource, id: string): Promise<boolean> {
+  const recent = await activityCache.getOrFetch(source.cacheScope, "recent", () =>
+    source.listRecent(),
+  );
+  if (recent.some((a) => a.id === id && isRun(a))) return true;
+
+  const history = await activityCache.getOrFetch(
+    source.cacheScope,
+    "history",
+    () => source.listAll(),
+    HISTORY_TTL_MS,
+  );
+  return history.some((a) => a.id === id && isRun(a));
+}
+
+/** GET /api/activities/:id/laps */
+activityRouter.get("/:id/laps", async (req, res) => {
+  const { id } = req.params;
+  if (!/^[\w-]{1,64}$/.test(id)) {
+    res.status(400).json({ error: "invalid_activity_id" });
+    return;
+  }
+
+  const source = getActivitySource(res);
+  const cacheKey = `${source.cacheScope}:${id}`;
+  let laps = lapsCache.get(cacheKey);
+  if (!laps) {
+    // Only proxy the athlete's own runs, never arbitrary upstream IDs.
+    if (!(await isOwnRun(source, id))) {
+      res.status(404).json({ error: "activity_not_found" });
+      return;
+    }
+    laps = await source.getLaps(id);
+    if (lapsCache.size >= LAPS_CACHE_MAX) {
+      // Map iterates in insertion order: drop the oldest entry.
+      lapsCache.delete(lapsCache.keys().next().value as string);
+    }
+    lapsCache.set(cacheKey, laps);
+  }
+  res.json(laps);
 });
