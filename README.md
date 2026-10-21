@@ -3,6 +3,8 @@
 Running dashboard powered by Intervals.icu (Garmin) or Strava. Installable as
 a PWA and usable offline.
 
+![PaceLab overview: monthly and yearly distance, longest run, weekly mileage and training load charts](docs/screenshot.png)
+
 ```
 pacelab/
 ├── frontend/   # Vite + React + TypeScript dashboard (PWA)
