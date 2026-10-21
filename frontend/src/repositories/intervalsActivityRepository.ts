@@ -19,6 +19,7 @@ import {
   toRunActivity,
 } from "../intervals/mapper";
 import { activityCacheStore, apiKeyStore } from "../intervals/storage";
+import { FULL_SYNC_MS, mergeActivities, syncWindow } from "../intervals/sync";
 import type { SourceActivity } from "../intervals/types";
 import type {
   ActivityLap,
@@ -30,10 +31,10 @@ import type { ActivityRepository } from "./activityRepository";
 
 const RECENT_RUNS_LIMIT = 10;
 const WEEKLY_STATS_WEEKS = 12;
-/** Reuse fetched activities for this long before asking Intervals.icu again. */
-const ACTIVITIES_TTL_MS = 5 * 60 * 1000;
+/** Re-check Intervals.icu for new or edited activities at most this often. */
+const SYNC_TTL_MS = 5 * 60 * 1000;
 
-let memory: { activities: SourceActivity[]; fetchedAt: number } | null = null;
+let memory: { activities: SourceActivity[]; syncedAt: number; fullSyncAt: number } | null = null;
 let inflight: Promise<SourceActivity[]> | null = null;
 /** Bumped on reset so a request from a previous session can't repopulate memory. */
 let generation = 0;
@@ -49,12 +50,14 @@ function requireApiKey(): string {
 }
 
 function isFresh(): boolean {
-  return memory !== null && Date.now() - memory.fetchedAt < ACTIVITIES_TTL_MS;
+  return memory !== null && Date.now() - memory.syncedAt < SYNC_TTL_MS;
 }
 
 /**
- * Every activity, newest first. Network first; when offline, falls back to
- * the copy saved on this device so the installed app still opens.
+ * Every activity, newest first. The full history is downloaded at most once
+ * a day; otherwise only the last couple of weeks are fetched and merged into
+ * the copy in memory or saved on this device. When offline, falls back to
+ * the saved copy so the installed app still opens.
  */
 function loadActivities(): Promise<SourceActivity[]> {
   if (memory && isFresh()) return Promise.resolve(memory.activities);
@@ -62,17 +65,31 @@ function loadActivities(): Promise<SourceActivity[]> {
   const requestGeneration = generation;
   inflight ??= (async () => {
     try {
-      const activities = await listActivities(requireApiKey(), 0);
+      const apiKey = requireApiKey();
+      const base = memory ?? (await activityCacheStore.get().catch(() => undefined));
+      const now = Date.now();
+      let activities: SourceActivity[];
+      let fullSyncAt: number;
+      if (base && now - base.fullSyncAt < FULL_SYNC_MS) {
+        const { fetchAfter, replaceFrom } = syncWindow(now);
+        const fresh = await listActivities(apiKey, fetchAfter);
+        activities = mergeActivities(base.activities, fresh, replaceFrom);
+        fullSyncAt = base.fullSyncAt;
+      } else {
+        activities = await listActivities(apiKey, 0);
+        fullSyncAt = now;
+      }
       if (requestGeneration === generation) {
-        memory = { activities, fetchedAt: Date.now() };
-        void activityCacheStore.set(activities).catch(() => {});
+        memory = { activities, syncedAt: now, fullSyncAt };
+        void activityCacheStore.set({ activities, fullSyncAt }).catch(() => {});
       }
       return activities;
     } catch (err) {
       // Auth and rate-limit errors are real answers; only network failures
       // fall back to cached data.
       if (!(err instanceof ApiError)) {
-        const cached = memory?.activities ?? (await activityCacheStore.get().catch(() => undefined));
+        const cached =
+          memory?.activities ?? (await activityCacheStore.get().catch(() => undefined))?.activities;
         if (cached) return cached;
       }
       throw err;

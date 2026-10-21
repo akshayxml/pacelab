@@ -1,7 +1,7 @@
 // Everything the static app keeps on this device: the Intervals.icu API key
 // (localStorage) and cached activities / best efforts (IndexedDB).
 
-import { clear, createStore, get, set } from "idb-keyval";
+import { clear, createStore, get, getMany, set, setMany } from "idb-keyval";
 import type { Athlete } from "../types/activity";
 import type { BestEffortTimes } from "./bestEfforts";
 import type { SourceActivity } from "./types";
@@ -16,6 +16,7 @@ const store = () => (db ??= createStore("pacelab", "cache"));
 /** Cached data is tagged with its athlete so a different account never sees it. */
 const OWNER = "owner";
 const ACTIVITIES = "activities";
+const ACTIVITIES_FULL_SYNC = "activities-full-sync";
 const BEST_EFFORTS = "best-efforts";
 
 function readJson<T>(key: string): T | null {
@@ -47,9 +48,29 @@ export async function claimCache(athleteId: string): Promise<void> {
   await set(OWNER, athleteId, store());
 }
 
+export interface CachedActivities {
+  activities: SourceActivity[];
+  /** When the full history was last downloaded (0 if unknown). */
+  fullSyncAt: number;
+}
+
 export const activityCacheStore = {
-  get: () => get<SourceActivity[]>(ACTIVITIES, store()),
-  set: (activities: SourceActivity[]) => set(ACTIVITIES, activities, store()),
+  async get(): Promise<CachedActivities | undefined> {
+    const [activities, fullSyncAt] = (await getMany(
+      [ACTIVITIES, ACTIVITIES_FULL_SYNC],
+      store(),
+    )) as [SourceActivity[] | undefined, number | undefined];
+    // Caches written before full-sync tracking get a full download next time.
+    return activities ? { activities, fullSyncAt: fullSyncAt ?? 0 } : undefined;
+  },
+  set: ({ activities, fullSyncAt }: CachedActivities) =>
+    setMany(
+      [
+        [ACTIVITIES, activities],
+        [ACTIVITIES_FULL_SYNC, fullSyncAt],
+      ],
+      store(),
+    ),
 };
 
 export const bestEffortCacheStore = {

@@ -5,12 +5,16 @@ import { bestEffortStore } from "./bestEffortStore.js";
 
 /** Parallel stream requests; low to stay polite with upstream rate limits. */
 const CONCURRENCY = 3;
+/** Minimum gap between stream requests across all workers (~4 req/s). */
+const MIN_REQUEST_INTERVAL_MS = 250;
 /** After a 429, wait this long before the next attempt. */
 const RATE_LIMIT_BACKOFF_MS = 15 * 60 * 1000;
 
 interface JobState {
   running: boolean;
   rateLimitedUntil: number;
+  /** Earliest time the next stream request may start. */
+  nextRequestAt: number;
 }
 
 /** One job per provider; activity IDs are unique within a provider. */
@@ -29,6 +33,14 @@ export function jobStatus(provider: string) {
   };
 }
 
+/** Waits for this worker's turn so all workers together respect the rate cap. */
+function throttle(job: JobState): Promise<void> {
+  const now = Date.now();
+  const at = Math.max(now, job.nextRequestAt);
+  job.nextRequestAt = at + MIN_REQUEST_INTERVAL_MS;
+  return at > now ? new Promise((resolve) => setTimeout(resolve, at - now)) : Promise.resolve();
+}
+
 /**
  * Fetches streams for `activityIds` not yet in the store and records their
  * best efforts. Fire-and-forget: callers poll the store for progress. A
@@ -38,7 +50,11 @@ export function ensureBestEfforts(
   source: ActivitySource,
   activityIds: string[],
 ): void {
-  const job = jobs.get(source.provider) ?? { running: false, rateLimitedUntil: 0 };
+  const job = jobs.get(source.provider) ?? {
+    running: false,
+    rateLimitedUntil: 0,
+    nextRequestAt: 0,
+  };
   jobs.set(source.provider, job);
   if (job.running || job.rateLimitedUntil > Date.now()) return;
 
@@ -54,6 +70,8 @@ export function ensureBestEfforts(
     while (!stopped) {
       const id = queue.shift();
       if (!id) return;
+      await throttle(job);
+      if (stopped) return;
       try {
         const stream = await source.getDistanceStream(id);
         bestEffortStore.set(

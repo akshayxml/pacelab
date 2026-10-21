@@ -5,7 +5,6 @@ import {
   localDate,
   toRunActivity,
   toLogEntry,
-  weeklyWindowStart,
 } from "../activities/activityMapper.js";
 import { activityCache } from "../activities/activityCache.js";
 import {
@@ -38,18 +37,16 @@ function clampInt(value: unknown, fallback: number, min: number, max: number) {
   return Math.min(max, Math.max(min, parsed));
 }
 
+/** The athlete's full activity history, newest first (incrementally synced). */
+function loadHistory(source: ActivitySource) {
+  return activityCache.getHistory(source.cacheScope, source);
+}
+
 /** GET /api/activities/recent?limit=10 */
 activityRouter.get("/recent", async (req, res) => {
   const source = getActivitySource(res);
   const limit = clampInt(req.query.limit, 10, 1, 50);
-
-  // Over-fetch since non-run activities (rides, swims) are filtered out.
-  const activities = await activityCache.getOrFetch(
-    source.cacheScope,
-    "recent",
-    () => source.listRecent(),
-  );
-
+  const activities = await loadHistory(source);
   res.json(activities.filter(isRun).slice(0, limit).map(toRunActivity));
 });
 
@@ -57,18 +54,9 @@ activityRouter.get("/recent", async (req, res) => {
 activityRouter.get("/weekly-stats", async (req, res) => {
   const source = getActivitySource(res);
   const weeks = clampInt(req.query.weeks, 8, 1, 52);
-
-  const activities = await activityCache.getOrFetch(
-    source.cacheScope,
-    `weekly:${weeks}`,
-    () => source.listSince(weeklyWindowStart(weeks)),
-  );
-
-  res.json(aggregateWeeklyStats(activities, weeks));
+  // Only activities inside the window land in a weekly bucket.
+  res.json(aggregateWeeklyStats(await loadHistory(source), weeks));
 });
-
-/** Full history is the most expensive upstream call, so keep it longer. */
-const HISTORY_TTL_MS = 30 * 60 * 1000;
 
 /**
  * GET /api/activities/history
@@ -77,14 +65,7 @@ const HISTORY_TTL_MS = 30 * 60 * 1000;
  */
 activityRouter.get("/history", async (_req, res) => {
   const source = getActivitySource(res);
-
-  const activities = await activityCache.getOrFetch(
-    source.cacheScope,
-    "history",
-    () => source.listAll(),
-    HISTORY_TTL_MS,
-  );
-
+  const activities = await loadHistory(source);
   res.json(activities.filter(isRun).map(toLogEntry));
 });
 
@@ -97,12 +78,7 @@ activityRouter.get("/history", async (_req, res) => {
 activityRouter.get("/best-efforts", async (_req, res) => {
   const source = getActivitySource(res);
   const [activities, store] = await Promise.all([
-    activityCache.getOrFetch(
-      source.cacheScope,
-      "history",
-      () => source.listAll(),
-      HISTORY_TTL_MS,
-    ),
+    loadHistory(source),
     bestEffortStore.ready(),
   ]);
 
@@ -160,21 +136,11 @@ const LAPS_CACHE_MAX = 500;
 const lapsCache = new Map<string, ActivityLap[]>();
 
 /**
- * True if `id` is one of the athlete's runs. Uses the same cached lists as
- * the dashboard, so it rarely costs an upstream request.
+ * True if `id` is one of the athlete's runs. Uses the same synced history
+ * as the dashboard, so it rarely costs an upstream request.
  */
 async function isOwnRun(source: ActivitySource, id: string): Promise<boolean> {
-  const recent = await activityCache.getOrFetch(source.cacheScope, "recent", () =>
-    source.listRecent(),
-  );
-  if (recent.some((a) => a.id === id && isRun(a))) return true;
-
-  const history = await activityCache.getOrFetch(
-    source.cacheScope,
-    "history",
-    () => source.listAll(),
-    HISTORY_TTL_MS,
-  );
+  const history = await loadHistory(source);
   return history.some((a) => a.id === id && isRun(a));
 }
 
